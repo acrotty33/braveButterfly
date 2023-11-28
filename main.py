@@ -62,20 +62,13 @@ def onStep(app):
         app.player.takeStep()
     if app.gameOver: return
 
-    # stopping the timer bar if player died or paused
-    # if app.gameOver or app.paused and not app.stoppedTime:
-    #     app.stopTime = time.time()
-    #     app.stoppedTime = True
-    # else:
-    #     #app.stopTime = time.time()
-    #     app.stoppedTime = False
-
-    # player won
+    # making sure timer doesn't keep going when paused/over
     if not app.paused and not app.gameOver:
         app.timeSurvived  = time.time() - app.startTime - app.timeStopped
     else:
         app.timeStopped = time.time() - app.stopTime
-
+    
+    # playe won
     if app.timeSurvived >= 60:
         app.won = True
 
@@ -108,47 +101,19 @@ def onStep(app):
             obstacle = randomObstacle(app, random.randrange(10))
             # makes sure obstacles aren't conjoined
             for ob in app.obstacles:
-                # if type(obstacle) == type(ob): # same obstacle
                 if type(ob) == Wasp: continue
                 while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle):
-                    # if isinstance(obstacle, Wasp):
-                    #     if obstacle.y > ob.y: # below a prior obstacle
-                    #         obstacle.y += ob.y
-                    #     else:
-                    #         obstacle.y -= ob.y
-                    # print("in other obstacle: ", obstacle.inOtherObstacle(ob))
-                    # print("isSurvivable: ", isSurvivable(app, obstacle))
                     if obstacle.inOtherObstacle(ob):
-                        #print("in other obstacle")
                         obstacle.x += ob.r
                     elif isinstance(obstacle, Web) and not isSurvivable(app, obstacle):
-                        # print("is web")
-                        # print("distance between centers: ", distance(ob.x, ob.y, obstacle.x, obstacle.y))
-                        # print(f"ob radius: {ob.r} \t ob.x = {ob.x}")
-                        # print(f"web radius: {obstacle.r} \t web x = {obstacle.x}")
                         obstacle.r -= 10
-                        #obstacle.x += ob.r
                         obstacle.y = obstacle.r
                     elif isinstance(obstacle, Net):
-                        # print("is net")
                         obstacle.r -= 10
                         obstacle.y = app.height-obstacle.r
                     else:
-                        # print("something else") 
                         obstacle = randomObstacle(app, random.randrange(10))
-                # else:
-                #     if not isSurvivable(app, obstacle):
-                #         pass
-            # makes sure the player can fit between the obstacles
-            # if isinstance(obstacle, Net):
-            #     maxY = getGreatestY(app)
-            #     if (obstacle.y - maxY.y) < (maxY.r + obstacle.r + 40):
-            #         obstacle.r -= 40
-            #         obstacle.y = app.height - obstacle.r
-            # if isinstance(obstacle, Wasp):
-            #     pass
             app.obstacles.append(obstacle)
-            # print(type(obstacle), obstacle.dx)
             app.lastSummonedObstacle = time.time()
         
     # summoning flowers
@@ -357,8 +322,7 @@ def drawTimerBar(app):
     
     # draw labels
     timeLeft = 60 - int(app.timeSurvived)
-    if app.gameOver or app.paused: 
-        timeLeft = 60 - int(app.stopTime - app.startTime)
+    if app.paused: timeLeft = 60 - int(app.timeSurvived)
     labelX = barTopX + barWidth/2
     labelY = 20 + fullBarHeight + app.height/2
     drawLabel("Time", labelX, labelY, size=16, fill=color, bold=True)
