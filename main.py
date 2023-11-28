@@ -34,11 +34,14 @@ def restartApp(app):
     app.obstacles = []
     app.flowers = []
     app.stepsPerSecond = 30
-    app.startTime = time.time()
-    app.stopTime = app.startTime + 1
-    app.stoppedTime = False
     app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
     app.numFlowersCaught = 0
+
+    app.startTime = time.time()
+    app.stopTime = None
+    app.timeStopped = 0
+    app.timeSurvived = 0
+    app.stoppedTime = False
 
     app.freqObstacles = 5 # every [num] steps, generate an obstacle
     app.freqFlowers = 5
@@ -60,12 +63,20 @@ def onStep(app):
     if app.gameOver: return
 
     # stopping the timer bar if player died or paused
-    if app.gameOver or app.paused and not app.stoppedTime:
-        app.stopTime = time.time()
-        app.stoppedTime = True
+    # if app.gameOver or app.paused and not app.stoppedTime:
+    #     app.stopTime = time.time()
+    #     app.stoppedTime = True
+    # else:
+    #     #app.stopTime = time.time()
+    #     app.stoppedTime = False
 
     # player won
-    if time.time() - app.startTime >= 60:
+    if not app.paused and not app.gameOver:
+        app.timeSurvived  = time.time() - app.startTime - app.timeStopped
+    else:
+        app.timeStopped = time.time() - app.stopTime
+
+    if app.timeSurvived >= 60:
         app.won = True
 
     # summoning obstacles smartly
@@ -98,35 +109,33 @@ def onStep(app):
             # makes sure obstacles aren't conjoined
             for ob in app.obstacles:
                 # if type(obstacle) == type(ob): # same obstacle
-                n = 0
                 if type(ob) == Wasp: continue
-                while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle) and n < 10:
+                while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle):
                     # if isinstance(obstacle, Wasp):
                     #     if obstacle.y > ob.y: # below a prior obstacle
                     #         obstacle.y += ob.y
                     #     else:
                     #         obstacle.y -= ob.y
-                    print("in other obstacle: ", obstacle.inOtherObstacle(ob))
-                    print("isSurvivable: ", isSurvivable(app, obstacle))
+                    # print("in other obstacle: ", obstacle.inOtherObstacle(ob))
+                    # print("isSurvivable: ", isSurvivable(app, obstacle))
                     if obstacle.inOtherObstacle(ob):
-                        print("in other obstacle")
+                        #print("in other obstacle")
                         obstacle.x += ob.r
                     elif isinstance(obstacle, Web) and not isSurvivable(app, obstacle):
-                        print("is web")
-                        print("distance between centers: ", distance(ob.x, ob.y, obstacle.x, obstacle.y))
-                        print(f"ob radius: {ob.r} \t ob.x = {ob.x}")
-                        print(f"web radius: {obstacle.r} \t web x = {obstacle.x}")
+                        # print("is web")
+                        # print("distance between centers: ", distance(ob.x, ob.y, obstacle.x, obstacle.y))
+                        # print(f"ob radius: {ob.r} \t ob.x = {ob.x}")
+                        # print(f"web radius: {obstacle.r} \t web x = {obstacle.x}")
                         obstacle.r -= 10
                         #obstacle.x += ob.r
                         obstacle.y = obstacle.r
                     elif isinstance(obstacle, Net):
-                        print("is net")
-                        obstacle.x += ob.r
+                        # print("is net")
+                        obstacle.r -= 10
                         obstacle.y = app.height-obstacle.r
                     else:
-                        print("something else") 
+                        # print("something else") 
                         obstacle = randomObstacle(app, random.randrange(10))
-                    n += 1
                 # else:
                 #     if not isSurvivable(app, obstacle):
                 #         pass
@@ -177,6 +186,7 @@ def onKeyPress(app, key):
     if key == "space" and not app.gameOver and not app.paused:
         app.player.jump()
     if key == "p" and not app.gameOver:
+        app.stopTime = time.time()
         app.paused = not app.paused
     if key == "r":
         restartApp(app)
@@ -329,8 +339,7 @@ def drawEnergyBar(app):
 
 # draws and updates the player's time bar (shows how much time they have left)
 def drawTimerBar(app):
-    timeSurvived = app.stopTime - app.startTime
-    timeRatio = timeSurvived / 60
+    timeRatio = app.timeSurvived / 60
     color = "blue"
     fullBarHeight = app.height/2 - 50
     barTopX = 20
@@ -342,17 +351,12 @@ def drawTimerBar(app):
 
     # draw time that's left
     topY = app.height/2 + (1-timeRatio)*fullBarHeight
-    if timeRatio < 1 and not app.gameOver and not app.paused: # game still going
+    if timeRatio > 0: 
         drawRect(barTopX, topY, barWidth, timeRatio*fullBarHeight, fill=color, 
                  border=color)
-    elif app.gameOver or app.paused: # freeze the bar when you died
-        lastTimeRatio = (app.stopTime - app.startTime)/60
-        lastTopY = app.height/2 + (1-lastTimeRatio)*fullBarHeight
-        drawRect(barTopX, lastTopY, barWidth, lastTimeRatio*fullBarHeight, 
-                 fill=color, border=color)
     
     # draw labels
-    timeLeft = 60 - int(timeSurvived)
+    timeLeft = 60 - int(app.timeSurvived)
     if app.gameOver or app.paused: 
         timeLeft = 60 - int(app.stopTime - app.startTime)
     labelX = barTopX + barWidth/2
