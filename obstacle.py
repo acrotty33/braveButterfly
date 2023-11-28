@@ -41,7 +41,7 @@ class Wasp(Obstacle):
 
     # constructor
     def __init__(self, level):
-        self.r = random.randrange(20, 40)
+        self.r = random.randrange(0.02*app.width, 0.04*app.width)
         self.x = app.width + self.r
         self.y = random.randrange(30, app.height-30)
         self.color = "yellow"
@@ -73,7 +73,7 @@ class Web(Obstacle):
 
     # constructor
     def __init__(self, level):
-        self.r = random.randrange(80, 120)
+        self.r = random.randrange(0.08*app.width, 0.15*app.width)
         self.x = app.width + self.r
         self.y = self.r
         self.color = "gray"
@@ -104,7 +104,7 @@ class Net(Obstacle):
 
     # constructor
     def __init__(self, level):
-        self.r = random.randrange(90, 150)
+        self.r = random.randrange(0.08*app.width, 0.15*app.width)
         self.x = app.width + self.r
         self.y = app.height - self.r
         self.dx = -3

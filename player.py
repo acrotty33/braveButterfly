@@ -13,12 +13,13 @@ class Player:
         self.stepCounter = 0
         self.x = 100
         self.y = 100
+        self.r = 20
         self.dy = 0 # velocity downwords
         self.ddy = 0.1 # acceleration downwards
     
     # draws player
     def draw(self):
-        drawCircle(self.x, self.y, 20, fill=self.color)
+        drawCircle(self.x, self.y, self.r, fill=self.color)
     
     # manages player falling
     def takeStep(self):
@@ -41,7 +42,7 @@ class Player:
         for obstacle in obstacles:
             x = self.x - obstacle.x
             y = self.y - obstacle.y
-            if (x**2 + y**2)**0.5 < obstacle.r:
+            if (x**2 + y**2)**0.5 < obstacle.r + self.r:
                 if isinstance(obstacle, Wasp): app.death = 1
                 elif isinstance(obstacle, Web): app.death = 2
                 elif isinstance(obstacle, Net): app.death = 3

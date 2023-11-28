@@ -2,11 +2,18 @@
 ISSUES:
 - player jump height unknown, isSurvivable ???
     - add isSurvivable condition when generating obstacles
+    - if jump height too big, obstacles are conjoined
+- timer doesn't stop when paused, only appears so
+- smart obstacle generation doesn't work when obstacles move at diff speeds
+    - idea: when summoning nets, check lowest y of all obstacles, and summon one
+    that has top y value at least 40 greater than that
 
 THINGS TO ADD:
 - working difficulty selection
 - sprites: butterflies(3), wasp, net, web, flowers(2)
-- moving/infinite background
+- moving/infinite background -- moves at same speed as webs
+- tutorial/autoplay
+- timer bar
 - win screen confetti animation
 - custom levels?
 - wind???
@@ -28,6 +35,8 @@ def restartApp(app):
     app.flowers = []
     app.stepsPerSecond = 30
     app.startTime = time.time()
+    app.stopTime = app.startTime + 1
+    app.stoppedTime = False
     app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
     app.numFlowersCaught = 0
 
@@ -49,6 +58,11 @@ def onStep(app):
     if not app.paused:
         app.player.takeStep()
     if app.gameOver: return
+
+    # stopping the timer bar if player died or paused
+    if app.gameOver or app.paused and not app.stoppedTime:
+        app.stopTime = time.time()
+        app.stoppedTime = True
 
     # player won
     if time.time() - app.startTime >= 60:
@@ -83,9 +97,47 @@ def onStep(app):
             obstacle = randomObstacle(app, random.randrange(10))
             # makes sure obstacles aren't conjoined
             for ob in app.obstacles:
-                if type(obstacle) == type(ob):
-                    while obstacle.inOtherObstacle(ob) and not isSurvivable(app, obstacle): ############## ADD SURVIVIABLE CONDITION!!!!!
+                # if type(obstacle) == type(ob): # same obstacle
+                n = 0
+                if type(ob) == Wasp: continue
+                while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle) and n < 10:
+                    # if isinstance(obstacle, Wasp):
+                    #     if obstacle.y > ob.y: # below a prior obstacle
+                    #         obstacle.y += ob.y
+                    #     else:
+                    #         obstacle.y -= ob.y
+                    print("in other obstacle: ", obstacle.inOtherObstacle(ob))
+                    print("isSurvivable: ", isSurvivable(app, obstacle))
+                    if obstacle.inOtherObstacle(ob):
+                        print("in other obstacle")
+                        obstacle.x += ob.r
+                    elif isinstance(obstacle, Web) and not isSurvivable(app, obstacle):
+                        print("is web")
+                        print("distance between centers: ", distance(ob.x, ob.y, obstacle.x, obstacle.y))
+                        print(f"ob radius: {ob.r} \t ob.x = {ob.x}")
+                        print(f"web radius: {obstacle.r} \t web x = {obstacle.x}")
+                        obstacle.r -= 10
+                        #obstacle.x += ob.r
+                        obstacle.y = obstacle.r
+                    elif isinstance(obstacle, Net):
+                        print("is net")
+                        obstacle.x += ob.r
+                        obstacle.y = app.height-obstacle.r
+                    else:
+                        print("something else") 
                         obstacle = randomObstacle(app, random.randrange(10))
+                    n += 1
+                # else:
+                #     if not isSurvivable(app, obstacle):
+                #         pass
+            # makes sure the player can fit between the obstacles
+            # if isinstance(obstacle, Net):
+            #     maxY = getGreatestY(app)
+            #     if (obstacle.y - maxY.y) < (maxY.r + obstacle.r + 40):
+            #         obstacle.r -= 40
+            #         obstacle.y = app.height - obstacle.r
+            # if isinstance(obstacle, Wasp):
+            #     pass
             app.obstacles.append(obstacle)
             # print(type(obstacle), obstacle.dx)
             app.lastSummonedObstacle = time.time()
@@ -141,6 +193,7 @@ def redrawAll(app):
         for flower in app.flowers:
             flower.draw()
         drawEnergyBar(app)
+        drawTimerBar(app)
         
         # draw game over screen
         if app.gameOver:
@@ -174,27 +227,52 @@ def randomFlower(app, num):
 def isSurvivable(app, potentialObstacle):
     potentialObList = app.obstacles + [potentialObstacle]
     # get a list of all the x values and radii of obstacles, including potential
-    for i in range(len(potentialObList)):
-        curr = potentialObList[i]
-        withinSameishX = [curr] 
+    for i in range(len(app.obstacles)):
+        curr = app.obstacles[i]
+        #withinSameishX = [curr]
+
         # makes a list of obstacles within sameish x
         # sameish x means within curr's x +/- combinedRadii of curr and other
-        for j in range(i+1, len(potentialObList)):
-            other = potentialObList[j]
-            combinedRadii = curr.r + other.r
-            if (other.x < curr.x + combinedRadii):
-                withinSameishX.append(other)
-        # now checking if there's at least one gap between sameishX obstacles
-        # that the player's jump can fit through
-        for k in range(len(withinSameishX)):
-            if k < len(withinSameishX)-1:
-                first = withinSameishX[k]
-                next = withinSameishX[k+1]
-                y = abs(first.y - next.y)
-                r = first.r + next.r
-                if y - r > 10: # REPLACE ONE WITH JUMP HEIGHT
-                    return True
-    return False
+        # for j in range(i+1, len(potentialObList)):
+        #     other = potentialObList[j]
+        #     combinedRadii = curr.r + other.r
+        #     if (other.x < curr.x + combinedRadii):
+        #         withinSameishX.append(other)
+
+        # # now checking if there's at least one gap between sameishX obstacles
+        # # that the player's jump can fit through
+        # for k in range(len(withinSameishX)):
+        #     if k < len(withinSameishX)-1:
+        #         first = withinSameishX[i]
+        #         next = withinSameishX[k+1]
+        #         y = abs(first.y - next.y)
+        #         r = first.r + next.r
+        #         if y - r > 40: # REPLACE WITH JUMP HEIGHT !!!!!!!
+        #             return True
+        # for l in range(len(potentialObList)):
+        #     check = potentialObList[l]
+        #     y = abs(curr.y - check.y)
+        #     r = curr.r + check.r
+        #     if y - r > 80:
+        #         return True
+        if isinstance(curr, Wasp): continue
+        if potentialObstacle.x - curr.x > app.width/2: continue
+        y = abs(curr.y - potentialObstacle.y)
+        r = curr.r + potentialObstacle.r
+        if abs(y - r) < 60:
+            return False
+    return True
+
+# from list of obstacles, returns the obstacle with greatest y value 
+def getGreatestY(app):
+    maxY = 0
+    if app.obstacles != []: 
+        maxObstacle = app.obstacles[0]
+        for obstacle in app.obstacles:
+            if obstacle.y > maxY:
+                maxY = obstacle.y
+                maxObstacle = obstacle
+        return maxObstacle
 
 def drawStartMenu(app):
     drawRect(0, 0, app.width, app.height, fill = "lightskyblue")
@@ -233,7 +311,7 @@ def drawEnergyBar(app):
     barTopX = 20
     barTopY = 10
     barWidth = 20
-    fullBarHeight = app.height/2-30
+    fullBarHeight = app.height/2-50
     drawRect(barTopX, barTopY, barWidth, fullBarHeight, fill=None, border=color)
 
     # draw energy that's still left
@@ -248,7 +326,42 @@ def drawEnergyBar(app):
     drawLabel("Energy", labelX, labelY, size=16, fill=color, bold=True)
     drawLabel(f"{app.player.energy}/10", labelX, labelY + 15, fill=color, 
               bold=True)
+
+# draws and updates the player's time bar (shows how much time they have left)
+def drawTimerBar(app):
+    timeSurvived = app.stopTime - app.startTime
+    timeRatio = timeSurvived / 60
+    color = "blue"
+    fullBarHeight = app.height/2 - 50
+    barTopX = 20
+    barTopY = app.height/2
+    barWidth = 20
+
+    # draw total time of 60 seconds to fill up
+    drawRect(barTopX, barTopY, barWidth, fullBarHeight, fill=None, border=color)
+
+    # draw time that's left
+    topY = app.height/2 + (1-timeRatio)*fullBarHeight
+    if timeRatio < 1 and not app.gameOver and not app.paused: # game still going
+        drawRect(barTopX, topY, barWidth, timeRatio*fullBarHeight, fill=color, 
+                 border=color)
+    elif app.gameOver or app.paused: # freeze the bar when you died
+        lastTimeRatio = (app.stopTime - app.startTime)/60
+        lastTopY = app.height/2 + (1-lastTimeRatio)*fullBarHeight
+        drawRect(barTopX, lastTopY, barWidth, lastTimeRatio*fullBarHeight, 
+                 fill=color, border=color)
     
+    # draw labels
+    timeLeft = 60 - int(timeSurvived)
+    if app.gameOver or app.paused: 
+        timeLeft = 60 - int(app.stopTime - app.startTime)
+    labelX = barTopX + barWidth/2
+    labelY = 20 + fullBarHeight + app.height/2
+    drawLabel("Time", labelX, labelY, size=16, fill=color, bold=True)
+    drawLabel(f"{timeLeft}", labelX, labelY + 15, fill=color, bold=True)
+    
+
+
 # draws the win screen: player wins if they survived a minute
 def drawWinScreen(app):
     drawRect(0, 0, app.width, app.height, fill="lightskyblue")
@@ -292,6 +405,11 @@ def drawLoseScreen(app):
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               deathY + 90, size=24, fill="white")
 
+# classic distance function
+def distance(x0, y0, x1, y1):
+    x = x0 - x1
+    y = y0 - y1
+    return (x**2 + y**2)**0.5
 
 def main():
     runApp(width = 800, height = 600)
