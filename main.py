@@ -1,15 +1,11 @@
 '''
 ISSUES:
-- player jump height unknown, isSurvivable ???
-    - add isSurvivable condition when generating obstacles
-    - if jump height too big, obstacles are conjoined
-- timer doesn't stop when paused, only appears so
 - smart obstacle generation doesn't work when obstacles move at diff speeds
-    - idea: when summoning nets, check lowest y of all obstacles, and summon one
-    that has top y value at least 40 greater than that
+    - idea: when summoning wasp, check greatest y's for the webs and nets and if the net is after the web, don't summon wasp?
 
 THINGS TO ADD:
 - working difficulty selection
+    - make part of constructor (color, player) (difficulty, obstacle)
 - sprites: butterflies(3), wasp, net, web, flowers(2)
 - moving/infinite background -- moves at same speed as webs
 - tutorial/autoplay
@@ -34,27 +30,41 @@ def restartApp(app):
     app.obstacles = []
     app.flowers = []
     app.stepsPerSecond = 30
-    app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
     app.numFlowersCaught = 0
 
     app.startTime = time.time()
     app.stopTime = None
     app.timeStopped = 0
     app.timeSurvived = 0
-    app.stoppedTime = False
+    app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
 
     app.freqObstacles = 5 # every [num] steps, generate an obstacle
     app.freqFlowers = 5
     app.numObstacles = 7
     app.numFlowers = 4
-    app.difficulty = 0 # 0 = easy, 1 = medium, 2 = hard, 3+ = custom
 
-    app.startMenu = False
+    app.startMenu = True
     app.gameOver = False
     app.paused = False
     app.won = False
-    app.death = 0
+    app.death = 0 # refers to type of death for death screen
 
+    # difficulty selection + coords
+    app.difficulty = 0 # 0 = easy, 1 = medium, 2 = hard, 3+ = custom MAKE IT NONE
+    app.diffy = 0.3*app.height
+    app.easyx = 0.2*app.width
+    app.interx = 0.4*app.width
+    app.hardx = 0.6*app.width
+    app.customx = 0.8*app.width
+
+    # butterfly color selection + coords
+    app.playerColor = "blue" # MAKE IT NONE
+    app.flyy = 0.6*app.height
+    app.pinkx = 0.25*app.width
+    app.orangex = 0.5*app.width
+    app.bluex = 0.75*app.width
+
+# check win/lose, summon/remove obstacles and flowers
 def onStep(app):
     # if time.time() > 5:
     #     app.startMenu = False
@@ -68,7 +78,7 @@ def onStep(app):
     else:
         app.timeStopped = time.time() - app.stopTime
     
-    # playe won
+    # player won
     if app.timeSurvived >= 60:
         app.won = True
 
@@ -179,6 +189,7 @@ def redrawAll(app):
 
 def onMousePress(app, mousex, mousey):
     if app.startMenu:
+        #if distance(mousex, mousey, )
         pass
     pass
 
@@ -254,22 +265,28 @@ def drawStartMenu(app):
     drawLabel("Start Menu", app.width/2, app.height/10, size = 36, 
               bold = True, font="montserrat")
     
-    difficultySelected = False
     # difficulty selection
     drawLabel("Click to choose a difficulty level", 
               app.width/2, app.height/4, size = 24)
-    easyx = app.width/8
-    drawLabel("Easy", app.width/8, app.height/3, size = 20, italic = True)
+    drawLabel("Easy", app.easyx, app.diffy, size = 20, italic = True)
+    drawLabel("Intermediate", app.interx, app.diffy, size=20, italic=True)
+    drawLabel("Hard", app.hardx, app.diffy, size=20, italic=True)
+    drawLabel("Custom", app.customx, app.diffy, size=20, italic=True)
 
-    intermediatex = easyx + 100
-    drawLabel("Intermediate", intermediatex, app.height/3, size=20, italic=True)
-
-    hardx = easyx + 200
-    drawLabel("Hard", hardx, app.height/3, size=20, italic=True)
-
-    
     # butterfly color selection
-    colors = ["red", "orange", "yellow", "green", "blue", "purple", "pink"]
+    colors = ["blue", "orange", "magenta"]
+    drawLabel("Click to choose a butterfly", app.width/2, app.height/2, size=24)
+    
+    # magenta
+
+
+    # orange
+
+    # pink
+
+    # background selection
+    # mountains, forest, flower field
+    
 
 # draws and updates player's energy bar
 def drawEnergyBar(app):
@@ -328,8 +345,6 @@ def drawTimerBar(app):
     drawLabel("Time", labelX, labelY, size=16, fill=color, bold=True)
     drawLabel(f"{timeLeft}", labelX, labelY + 15, fill=color, bold=True)
     
-
-
 # draws the win screen: player wins if they survived a minute
 def drawWinScreen(app):
     drawRect(0, 0, app.width, app.height, fill="lightskyblue")
@@ -342,9 +357,11 @@ def drawWinScreen(app):
     else: difficulty = "Custom"
     difficultyY = app.width/3
     drawLabel(f"Difficulty: {difficulty}", app.width/2, difficultyY, size=24)
-
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               difficultyY + 30, size=24)
+    
+    # restart
+    drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
 
 # draws lose screen: player loses if they hit obstacle or ran out of energy
 def drawLoseScreen(app):
@@ -369,9 +386,11 @@ def drawLoseScreen(app):
     else: difficulty = "Custom"
     drawLabel(f"Difficulty: {difficulty}", app.width/2, deathY+60, size=24,
               fill="white")
-
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               deathY + 90, size=24, fill="white")
+    
+    # restart
+    drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
 
 # classic distance function
 def distance(x0, y0, x1, y1):

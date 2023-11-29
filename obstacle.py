@@ -46,28 +46,26 @@ class Wasp(Obstacle):
         self.y = random.randrange(30, app.height-30)
         self.color = "yellow"
         if level == 0:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived < 20: # first level speed
                 self.dx = -5
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived < 40: # second level speed
                 self.dx = -6
             else:
                 self.dx = -7
         if level == 1:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived: # first level speed
                 self.dx = -6
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived: # second level speed
                 self.dx = -7
             else:
                 self.dx = -8
         if level == 2:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived: # first level speed
                 self.dx = -7
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived: # second level speed
                 self.dx = -8
             else:
                 self.dx = -9
-        # print("level: ", level)
-
 
 class Web(Obstacle):
 
@@ -78,27 +76,26 @@ class Web(Obstacle):
         self.y = self.r
         self.color = "gray"
         if level == 0:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived < 20: # first level speed
                 self.dx = -3
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived < 40: # second level speed
                 self.dx = -4
             else:
                 self.dx = -5
         if level == 1:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived < 20: # first level speed
                 self.dx = -4
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived < 40: # second level speed
                 self.dx = -5
             else:
                 self.dx = -6
         if level == 2:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived < 20: # first level speed
                 self.dx = -5
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived < 40: # second level speed
                 self.dx = -6
             else:
                 self.dx = -7
-
 
 class Net(Obstacle):
 
@@ -110,25 +107,23 @@ class Net(Obstacle):
         self.dx = -3
         self.color = "brown"
         if level == 0:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived < 20: # first level speed
                 self.dx = -4
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived < 40: # second level speed
                 self.dx = -5
             else:
                 self.dx = -6
         if level == 1:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived: # first level speed
                 self.dx = -5
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived: # second level speed
                 self.dx = -6
             else:
                 self.dx = -7
         if level == 2:
-            if time.time() - app.startTime < 20: # first level speed
+            if app.timeSurvived < 20: # first level speed
                 self.dx = -6
-            elif time.time() - app.startTime < 40: # second level speed
+            elif app.timeSurvived < 40: # second level speed
                 self.dx = -7
             else:
                 self.dx = -8
-        # print(time.time())
-        # print(time.clock_settime(0))
