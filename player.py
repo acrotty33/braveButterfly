@@ -12,14 +12,14 @@ class Player:
     def reset(self):
         self.stepCounter = 0
         self.x = 100
-        self.y = 100
+        self.y = 200
         self.r = 20
         self.dy = 0 # velocity downwords
         self.ddy = 0.1 # acceleration downwards
     
     # draws player
-    def draw(self):
-        drawCircle(self.x, self.y, self.r, fill=self.color)
+    def draw(self, x, y, color, opac):
+        drawCircle(x, y, self.r, fill=color, opacity=opac)
     
     # manages player falling
     def takeStep(self):

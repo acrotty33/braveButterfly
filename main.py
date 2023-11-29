@@ -4,15 +4,11 @@ ISSUES:
     - idea: when summoning wasp, check greatest y's for the webs and nets and if the net is after the web, don't summon wasp?
 
 THINGS TO ADD:
-- working difficulty selection
-    - make part of constructor (color, player) (difficulty, obstacle)
 - sprites: butterflies(3), wasp, net, web, flowers(2)
+- custom difficulty selection
 - moving/infinite background -- moves at same speed as webs
 - tutorial/autoplay
-- timer bar
 - win screen confetti animation
-- custom levels?
-- wind???
 '''
 
 from cmu_graphics import *
@@ -25,6 +21,7 @@ import time
 def onAppStart(app):
     restartApp(app)
 
+# initialize app variables
 def restartApp(app):
     app.player = Player()
     app.obstacles = []
@@ -32,7 +29,7 @@ def restartApp(app):
     app.stepsPerSecond = 30
     app.numFlowersCaught = 0
 
-    app.startTime = time.time()
+    app.startTime = None
     app.stopTime = None
     app.timeStopped = 0
     app.timeSurvived = 0
@@ -53,110 +50,113 @@ def restartApp(app):
     app.difficulty = 0 # 0 = easy, 1 = medium, 2 = hard, 3+ = custom MAKE IT NONE
     app.diffy = 0.3*app.height
     app.easyx = 0.2*app.width
-    app.interx = 0.4*app.width
+    app.medx = 0.4*app.width
     app.hardx = 0.6*app.width
     app.customx = 0.8*app.width
+    app.isHighlighting = None
 
     # butterfly color selection + coords
-    app.playerColor = "blue" # MAKE IT NONE
-    app.flyy = 0.6*app.height
+    app.playerColor = "magenta" # MAKE IT NONE
+    app.flyy = 0.5*app.height
     app.pinkx = 0.25*app.width
     app.orangex = 0.5*app.width
     app.bluex = 0.75*app.width
 
 # check win/lose, summon/remove obstacles and flowers
 def onStep(app):
-    # if time.time() > 5:
-    #     app.startMenu = False
-    if not app.paused:
+    if app.startTime != None:
+         app.startMenu = False
+    if not app.paused and not app.startMenu:
         app.player.takeStep()
     if app.gameOver: return
 
     # making sure timer doesn't keep going when paused/over
-    if not app.paused and not app.gameOver:
-        app.timeSurvived  = time.time() - app.startTime - app.timeStopped
-    else:
-        app.timeStopped = time.time() - app.stopTime
+    if not app.startMenu:
+        if not app.paused and not app.gameOver:
+            app.timeSurvived  = time.time() - app.startTime - app.timeStopped
+        else:
+            app.timeStopped = time.time() - app.stopTime
     
-    # player won
-    if app.timeSurvived >= 60:
-        app.won = True
+        # player won
+        if app.timeSurvived >= 60:
+            app.won = True
 
-    # summoning obstacles smartly
-    numSummoning = random.randrange(1, app.numObstacles) # number of obstacles
-    if not app.paused:
-        # removing obstacles if player passes them
-        obIndex = 0
-        while obIndex < len(app.obstacles):
-            obstacle = app.obstacles[obIndex]
-            obstacle.takeStep()
-            if obstacle.obstaclePassed():
-                app.obstacles.pop(obIndex) # delete obstacle when it's passed
-            else:
-                obIndex += 1
+        # summoning obstacles smartly
+        numSummoning = random.randrange(1, app.numObstacles) # number of obstacles
+        if not app.paused:
+            # removing obstacles if player passes them
+            obIndex = 0
+            while obIndex < len(app.obstacles):
+                obstacle = app.obstacles[obIndex]
+                obstacle.takeStep()
+                if obstacle.obstaclePassed():
+                    app.obstacles.pop(obIndex) # delete obstacle when it's passed
+                else:
+                    obIndex += 1
+            
+            # removing flowers if player passes them
+            flowerIndex = 0
+            while flowerIndex < len(app.flowers):
+                flower = app.flowers[flowerIndex]
+                flower.takeStep()
+                if flower.flowerPassed():
+                    app.flowers.pop(flowerIndex) # delete flower when it's passed
+                else:
+                    flowerIndex += 1
         
-        # removing flowers if player passes them
-        flowerIndex = 0
-        while flowerIndex < len(app.flowers):
-            flower = app.flowers[flowerIndex]
-            flower.takeStep()
-            if flower.flowerPassed():
-                app.flowers.pop(flowerIndex) # delete flower when it's passed
-            else:
-                flowerIndex += 1
-    
-        # summoning obstacles
-        enoughTimePassed = time.time() - app.lastSummonedObstacle > 1
-        if enoughTimePassed and (len(app.obstacles) < numSummoning):
-            obstacle = randomObstacle(app, random.randrange(10))
-            # makes sure obstacles aren't conjoined
-            for ob in app.obstacles:
-                if type(ob) == Wasp: continue
-                while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle):
-                    if obstacle.inOtherObstacle(ob):
-                        obstacle.x += ob.r
-                    elif isinstance(obstacle, Web) and not isSurvivable(app, obstacle):
-                        obstacle.r -= 10
-                        obstacle.y = obstacle.r
-                    elif isinstance(obstacle, Net):
-                        obstacle.r -= 10
-                        obstacle.y = app.height-obstacle.r
-                    else:
-                        obstacle = randomObstacle(app, random.randrange(10))
-            app.obstacles.append(obstacle)
-            app.lastSummonedObstacle = time.time()
-        
-    # summoning flowers
-    if not app.paused:
-        numFlowersSummoning = random.randrange(0, app.numFlowers)
-        flowerTime = time.time() - app.lastSummonedFlower > 2
-        if flowerTime and (len(app.flowers) < numFlowersSummoning):
-            flower = randomFlower(app, random.randrange(10))
-            app.flowers.append(flower)
-            app.lastSummonedFlower = time.time()
-        
-        # if player touched a flower, give player energy
-        i = 0
-        while i < len(app.flowers):
-            if app.player.gotFlower(app.flowers[i]):
-                app.player.addEnergy(app.flowers[i])
-                app.flowers.pop(i)
-            else:
-                i += 1
+            # summoning obstacles
+            enoughTimePassed = time.time() - app.lastSummonedObstacle > 1
+            if enoughTimePassed and (len(app.obstacles) < numSummoning):
+                obstacle = randomObstacle(app, random.randrange(10))
+                # makes sure obstacles aren't conjoined
+                for ob in app.obstacles:
+                    if type(ob) == Wasp: continue
+                    while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle):
+                        if obstacle.inOtherObstacle(ob):
+                            obstacle.x += ob.r
+                        elif isinstance(obstacle, Web) and not isSurvivable(app, obstacle):
+                            obstacle.r -= 10
+                            obstacle.y = obstacle.r
+                        elif isinstance(obstacle, Net):
+                            obstacle.r -= 10
+                            obstacle.y = app.height-obstacle.r
+                        else:
+                            obstacle = randomObstacle(app, random.randrange(10))
+                app.obstacles.append(obstacle)
+                app.lastSummonedObstacle = time.time()
+            
+        # summoning flowers
+        if not app.paused:
+            numFlowersSummoning = random.randrange(0, app.numFlowers)
+            flowerTime = time.time() - app.lastSummonedFlower > 2
+            if flowerTime and (len(app.flowers) < numFlowersSummoning):
+                flower = randomFlower(app, random.randrange(10))
+                app.flowers.append(flower)
+                app.lastSummonedFlower = time.time()
+            
+            # if player touched a flower, give player energy
+            i = 0
+            while i < len(app.flowers):
+                if app.player.gotFlower(app.flowers[i]):
+                    app.player.addEnergy(app.flowers[i])
+                    app.flowers.pop(i)
+                else:
+                    i += 1
 
-    # full energy depletion = lose condition 
-    if app.player.energy <= 0:
-        app.death = 0
-        app.gameOver = True
-    
-    # game over if player hits an obstacle or touches bottom/top of screen
-    playerFell = app.player.y >= app.height
-    playerTooHigh = app.player.y < 0
-    if app.player.isColliding(app.obstacles) or playerFell or playerTooHigh:
-        if playerFell: app.death = 4
-        elif playerTooHigh: app.death = 5
-        app.gameOver = True
+        # full energy depletion = lose condition 
+        if app.player.energy <= 0:
+            app.death = 0
+            app.gameOver = True
+        
+        # game over if player hits an obstacle or touches bottom/top of screen
+        playerFell = app.player.y >= app.height
+        playerTooHigh = app.player.y < 0
+        if app.player.isColliding(app.obstacles) or playerFell or playerTooHigh:
+            if playerFell: app.death = 4
+            elif playerTooHigh: app.death = 5
+            app.gameOver = True
 
+# spacebar to jump, r to reset, p to pause
 def onKeyPress(app, key):
     if key == "space" and not app.gameOver and not app.paused:
         app.player.jump()
@@ -185,13 +185,30 @@ def redrawAll(app):
             drawLoseScreen(app)
         
         # draws player dying
-        app.player.draw()
+        app.player.draw(app.player.x, app.player.y, app.playerColor, 100)
 
 def onMousePress(app, mousex, mousey):
+    wordRadius = 20
     if app.startMenu:
-        #if distance(mousex, mousey, )
-        pass
-    pass
+        # difficulty selection
+        if distance(mousex, mousey, app.easyx, app.diffy) < wordRadius:
+            app.difficulty = 0
+        elif distance(mousex, mousey, app.medx, app.diffy) < wordRadius:
+            app.difficulty = 1
+        elif distance(mousex, mousey, app.hardx, app.diffy) < wordRadius:
+            app.difficulty = 2
+        elif distance(mousex, mousey, app.customx, app.diffy) < wordRadius:
+            app.difficulty = 3
+        # player color selection
+        if distance(mousex, mousey, app.pinkx, app.flyy) < wordRadius:
+            app.playerColor = "magenta"
+        elif distance(mousex, mousey, app.orangex, app.flyy) < wordRadius:
+            app.playerColor = "orange"
+        elif distance(mousex, mousey, app.bluex, app.flyy) < wordRadius:
+            app.playerColor = "blue"
+        # start button
+        if distance(mousex, mousey, app.width/2, 0.9*app.height) < wordRadius:
+            app.startTime = time.time()
 
 # generates an obstacle
 def randomObstacle(app, num):
@@ -262,31 +279,55 @@ def getGreatestY(app):
 
 def drawStartMenu(app):
     drawRect(0, 0, app.width, app.height, fill = "lightskyblue")
-    drawLabel("Start Menu", app.width/2, app.height/10, size = 36, 
+    drawLabel("Start Menu", app.width/2, app.height/10, size = 48, 
               bold = True, font="montserrat")
     
     # difficulty selection
     drawLabel("Click to choose a difficulty level", 
-              app.width/2, app.height/4, size = 24)
-    drawLabel("Easy", app.easyx, app.diffy, size = 20, italic = True)
-    drawLabel("Intermediate", app.interx, app.diffy, size=20, italic=True)
-    drawLabel("Hard", app.hardx, app.diffy, size=20, italic=True)
-    drawLabel("Custom", app.customx, app.diffy, size=20, italic=True)
+              app.width/2, 0.2*app.height, size = 24)
+    if app.difficulty == 0: 
+        drawLabel("Easy", app.easyx, app.diffy, size = 20, italic = True, bold=True)
+    else: drawLabel("Easy", app.easyx, app.diffy, size = 20, italic = True)
+    
+    if app.difficulty == 1:
+        drawLabel("Medium", app.medx, app.diffy, size=20, italic=True, bold=True)
+    else: drawLabel("Medium", app.medx, app.diffy, size=20, italic=True)
+    
+    if app.difficulty == 2:
+        drawLabel("Hard", app.hardx, app.diffy, size=20, italic=True, bold=True)
+    else: drawLabel("Hard", app.hardx, app.diffy, size=20, italic=True)
+    
+    if app.difficulty == 3:
+        drawLabel("Custom", app.customx, app.diffy, size=20, italic=True, bold=True)
+    else: drawLabel("Custom", app.customx, app.diffy, size=20, italic=True)
 
     # butterfly color selection
-    colors = ["blue", "orange", "magenta"]
-    drawLabel("Click to choose a butterfly", app.width/2, app.height/2, size=24)
-    
-    # magenta
+    drawLabel("Click to choose your butterfly", app.width/2, 0.4*app.height, size=24)
 
+    if app.playerColor == "orange":
+        app.player.draw(app.orangex, app.flyy, "orange", 100)
+    else: app.player.draw(app.orangex, app.flyy, "orange", 60)
 
-    # orange
+    if app.playerColor == "magenta":
+        app.player.draw(app.pinkx, app.flyy, "magenta", 100)
+    else: app.player.draw(app.pinkx, app.flyy, "magenta", 60)
 
-    # pink
+    if app.playerColor == "blue":
+        app.player.draw(app.bluex, app.flyy, "blue", 100)
+    else: app.player.draw(app.bluex, app.flyy, "blue", 60)
 
-    # background selection
-    # mountains, forest, flower field
-    
+    # how to play
+    drawLabel("Tips", 0.5*app.width, 0.6*app.height, size=24, bold=True)
+    drawLabel("Press SPACE to jump, 'r' to restart, and 'p' to pause.", 
+              0.2*app.width, 0.65*app.height, size=20, align="left")
+    drawLabel("Avoid hitting obstacles like wasps, webs, and butterfly nets.", 
+              0.2*app.width, 0.7*app.height, size=20, align="left")
+    drawLabel("Make sure to catch flowers to replenish your energy!",
+              0.2*app.width, 0.75*app.height, size=20, align="left")
+    drawLabel("You must survive for one minute.",
+              0.2*app.width, 0.8*app.height, size=20, align="left")
+    # start button
+    drawLabel("Start", 0.5*app.width, 0.9*app.height, size=24, bold=True)
 
 # draws and updates player's energy bar
 def drawEnergyBar(app):

@@ -45,6 +45,7 @@ class Wasp(Obstacle):
         self.x = app.width + self.r
         self.y = random.randrange(30, app.height-30)
         self.color = "yellow"
+        level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
                 self.dx = -5
@@ -75,6 +76,7 @@ class Web(Obstacle):
         self.x = app.width + self.r
         self.y = self.r
         self.color = "gray"
+        level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
                 self.dx = -3
@@ -106,6 +108,7 @@ class Net(Obstacle):
         self.y = app.height - self.r
         self.dx = -3
         self.color = "brown"
+        level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
                 self.dx = -4
