@@ -23,7 +23,7 @@ class Flower:
     # draws flower
     def draw(self):
         #drawCircle(self.x, self.y, self.r, fill = self.color)
-        drawImage(self.image, self.x, self.y, align="center")
+        drawImage(self.image, self.x, self.y, width=self.r*2, height = self.r*2, align="center")
     
     # removes obstacle if player avoided it
     def flowerPassed(self):
@@ -38,17 +38,14 @@ class BigFlower(Flower):
 
     # constructor
     def __init__(self):
-        self.r = 15
+        self.r = random.randrange(18, 23)
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
         self.dy = 2
         self.color = "red"
-        self.energy = 1.25
-        #self.image = CMUImage(Image.open("images/redFlowerNoBG.png"))
-        image = Image.open("images/redFlowerNoBG.png")
-        new = image.resize((image.size[0]//8, image.size[1]//8))
-        self.image = CMUImage(new)
+        self.energy = 1
+        self.image = app.redFlower
 
 class SmallFlower(Flower):
 
@@ -57,14 +54,11 @@ class SmallFlower(Flower):
 
     # constructor
     def __init__(self):
-        self.r = 15
+        self.r = random.randrange(15, 20)
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
         self.dy = 2
         self.color = "pink"
         self.energy = 0.5
-        # fr = flyGif.resize((flyGif.size[0]//5, flyGif.size[1]//5))
-        image = Image.open("images/pinkFlowerNoBG.png")
-        new = image.resize((image.size[0]//10, image.size[1]//10))
-        self.image = CMUImage(new)
+        self.image = app.pinkFlower

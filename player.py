@@ -16,23 +16,6 @@ class Player:
         # red butterfly: https://tenor.com/view/butterfly-freedom-pretty-nature-fly-gif-14485863
         # blue butterfly: https://tenor.com/view/butterfly-blue-butterfly-freedom-pretty-nature-gif-14485845
         # light teal butterfly: https://tenor.com/view/butterfly-blue-butterfly-freedom-pretty-nature-gif-14485854
-        # if app.playerColor == "red":
-        #     flyGif = Image.open("images/red.gif")
-        # elif app.playerColor == "pink":
-        #     flyGif = Image.open("images/pink.gif")
-        # elif app.playerColor == "orange":
-        #     flyGif = Image.open("images/orange.gif")
-        # elif app.playerColor == "lightTeal":
-        #     flyGif = Image.open("images/light-teal.gif")
-        # else:
-        #     flyGif = Image.open("images/blue.gif")
-
-        # self.spriteList = [] 
-        # for frame in range(flyGif.n_frames):
-        #     flyGif.seek(frame)
-        #     fr = flyGif.resize((flyGif.size[0]//5, flyGif.size[1]//5))
-        #     fr = CMUImage(fr)
-        #     self.spriteList.append(fr)
         self.reset()
     
     # resets player when game resets
@@ -45,10 +28,8 @@ class Player:
         self.dy = 0 # velocity downwords
         self.ddy = 0.1 # acceleration downwards
     
-    # draws player
+    # draws player, code from animated gif demo lecture
     def draw(self, x, y):
-        # drawCircle(x, y, self.r, fill=color, opacity=opac)
-
         if app.playerColor == "red":
             flyGif = Image.open("images/red.gif")
         elif app.playerColor == "pink":

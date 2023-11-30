@@ -4,7 +4,9 @@ ISSUES:
     - idea: when summoning wasp, check greatest y's for the webs and nets and if the net is after the web, don't summon wasp?
 
 THINGS TO ADD:
-- sprites: butterflies(3), wasp, net, web, flowers(2)
+- images: wasp, web, net
+    ## add al the images in on app start so you don't run CMUImage every redrawAll!!! must faster
+    # may be able to add wasp sprite then!!!! :))))
 - custom difficulty selection
 - moving/infinite background -- moves at same speed as webs
 - tutorial/autoplay
@@ -35,10 +37,10 @@ def restartApp(app):
     app.timeSurvived = 0
     app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
 
-    app.freqObstacles = 5 # every [num] steps, generate an obstacle
+    app.freqObstacles = 4 # every [num] steps, generate an obstacle
     app.freqFlowers = 5
-    app.numObstacles = 7
-    app.numFlowers = 4
+    app.numObstacles = 9
+    app.numFlowers = 3
 
     app.startMenu = True
     app.gameOver = False
@@ -63,6 +65,14 @@ def restartApp(app):
     app.orangex = (3/6)*app.width
     app.lightTealx = (4/6)*app.width
     app.bluex = (5/6)*app.width
+
+    # images
+    app.webImage = CMUImage(Image.open("images/spiderwebNoBG.png"))
+    app.netImage = CMUImage(Image.open("images/butterflyNetNoBG.png"))
+
+    # flowers
+    app.redFlower = CMUImage(Image.open("images/redFlowerNoBG.png"))
+    app.pinkFlower = CMUImage(Image.open("images/pinkFlowerNoBG.png"))
 
     app.player = Player()
 
@@ -361,6 +371,14 @@ def drawStartMenu(app):
     # start button
     drawLabel("Start", 0.5*app.width, 0.9*app.height, size=24, bold=True)
 
+def drawCustomScreen(app):
+    drawLabel("Custom Difficulty", app.width/2, 0.1*app.height, size=48, bold=True)
+    # obstacle start speeds
+    # num obstacles
+    # num flowers
+    # time
+    # energy loss per jump
+
 # draws and updates player's energy bar
 def drawEnergyBar(app):
     energyRatio = app.player.energy/10
@@ -464,6 +482,10 @@ def drawLoseScreen(app):
     
     # restart
     drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
+
+# def makeCMUImage(image, factor):
+#     resize = image.resize((image.size[0]//factor, image.size[1]//factor))
+#     return CMUImage(resize)
 
 # classic distance function
 def distance(x0, y0, x1, y1):

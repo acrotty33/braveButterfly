@@ -101,6 +101,8 @@ class Web(Obstacle):
         self.x = app.width + self.r
         self.y = self.r
         self.color = "gray"
+        self.image = app.webImage
+
         # self.spriteCounter = 0
         # self.stepCounter = 0
         level = app.difficulty
@@ -127,17 +129,8 @@ class Web(Obstacle):
                 self.dx = -7
 
     def draw(self):
-        # webGif = Image.open("images/wasp.gif")
+        drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
 
-        # self.spriteList = [] 
-        # for frame in range(webGif.n_frames):
-        #     webGif.seek(frame)
-        #     fr = webGif.resize((webGif.size[0]//3, webGif.size[1]//3))
-        #     fr = CMUImage(fr)
-        #     self.spriteList.append(fr)
-        # web = self.spriteList[self.spriteCounter]
-        # drawImage(web, self.x, self.y, align="center")
-        drawCircle(self.x, self.y, self.r, fill=self.color)
 
 class Net(Obstacle):
 
@@ -148,8 +141,7 @@ class Net(Obstacle):
         self.y = app.height - self.r
         self.dx = -3
         self.color = "brown"
-        # self.spriteCounter = 0
-        # self.stepCounter = 0
+        self.image = app.netImage
         level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
@@ -174,14 +166,4 @@ class Net(Obstacle):
                 self.dx = -8
         
     def draw(self):
-        # netGif = Image.open("images/wasp.gif")
-
-        # self.spriteList = [] 
-        # for frame in range(netGif.n_frames):
-        #     netGif.seek(frame)
-        #     fr = netGif.resize((netGif.size[0]//3, netGif.size[1]//3))
-        #     fr = CMUImage(fr)
-        #     self.spriteList.append(fr)
-        # net = self.spriteList[self.spriteCounter]
-        # drawImage(net, self.x, self.y, align="center")
-        drawCircle(self.x, self.y, self.r, fill=self.color)
+        drawImage(self.image, self.x, self.y + 0.75*self.r, width = 4*self.r, height=4*self.r, align="center")
