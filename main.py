@@ -17,13 +17,13 @@ from obstacle import *
 from flower import *
 import random
 import time
+from PIL import Image
 
 def onAppStart(app):
     restartApp(app)
 
 # initialize app variables
 def restartApp(app):
-    app.player = Player()
     app.obstacles = []
     app.flowers = []
     app.stepsPerSecond = 30
@@ -55,12 +55,16 @@ def restartApp(app):
     app.customx = 0.8*app.width
     app.isHighlighting = None
 
-    # butterfly color selection + coords
-    app.playerColor = "magenta" # MAKE IT NONE
+    # butterfly color selection coords
+    app.playerColor = "red"
     app.flyy = 0.5*app.height
-    app.pinkx = 0.25*app.width
-    app.orangex = 0.5*app.width
-    app.bluex = 0.75*app.width
+    app.redx = (1/6)*app.width
+    app.pinkx = (2/6)*app.width
+    app.orangex = (3/6)*app.width
+    app.lightTealx = (4/6)*app.width
+    app.bluex = (5/6)*app.width
+
+    app.player = Player()
 
 # check win/lose, summon/remove obstacles and flowers
 def onStep(app):
@@ -70,8 +74,8 @@ def onStep(app):
         app.player.takeStep()
     if app.gameOver: return
 
-    # making sure timer doesn't keep going when paused/over
     if not app.startMenu:
+        # making sure timer doesn't keep going when paused/over
         if not app.paused and not app.gameOver:
             app.timeSurvived  = time.time() - app.startTime - app.timeStopped
         else:
@@ -184,8 +188,12 @@ def redrawAll(app):
         if app.gameOver:
             drawLoseScreen(app)
         
+        # draw pause screen
+        if app.paused:
+            drawLabel("PAUSED", app.width/2, app.height/2, size=48, bold=True)
+        
         # draws player dying
-        app.player.draw(app.player.x, app.player.y, app.playerColor, 100)
+        app.player.draw(app.player.x, app.player.y)
 
 def onMousePress(app, mousex, mousey):
     wordRadius = 20
@@ -199,31 +207,37 @@ def onMousePress(app, mousex, mousey):
             app.difficulty = 2
         elif distance(mousex, mousey, app.customx, app.diffy) < wordRadius:
             app.difficulty = 3
+        
         # player color selection
-        if distance(mousex, mousey, app.pinkx, app.flyy) < wordRadius:
-            app.playerColor = "magenta"
+        if distance(mousex, mousey, app.redx, app.flyy) < wordRadius:
+            app.playerColor = "red"
+        elif distance(mousex, mousey, app.pinkx, app.flyy) < wordRadius:
+            app.playerColor = "pink"
         elif distance(mousex, mousey, app.orangex, app.flyy) < wordRadius:
             app.playerColor = "orange"
+        elif distance(mousex, mousey, app.lightTealx, app.flyy) < wordRadius:
+            app.playerColor = "lightTeal"
         elif distance(mousex, mousey, app.bluex, app.flyy) < wordRadius:
             app.playerColor = "blue"
+
         # start button
         if distance(mousex, mousey, app.width/2, 0.9*app.height) < wordRadius:
             app.startTime = time.time()
 
 # generates an obstacle
 def randomObstacle(app, num):
-    if num < 3:
+    if num < 3: # 30%
         return Web(app.difficulty)
-    elif num > 8:
+    elif num > 8: # 20$
         return Net(app.difficulty)
-    else:
+    else: # 50%
         return Wasp(app.difficulty)
 
 # generates a flower
 def randomFlower(app, num):
-    if num < 7:
+    if num < 7: # 70%
         return SmallFlower()
-    else:
+    else: # 30%
         return BigFlower()
 
 # checks if the obstacles are passable
@@ -304,17 +318,35 @@ def drawStartMenu(app):
     # butterfly color selection
     drawLabel("Click to choose your butterfly", app.width/2, 0.4*app.height, size=24)
 
+    redGif = Image.open("images/red.gif")
+    redPic = CMUImage(redGif.resize((redGif.size[0]//5, redGif.size[1]//5)))
+    if app.playerColor == "red":
+        drawImage(redPic, app.redx, app.flyy, align="center")
+    else: drawImage(redPic, app.redx, app.flyy, align="center", opacity=60)
+
+    pinkGif = Image.open("images/pink.gif")
+    pinkPic = CMUImage(pinkGif.resize((pinkGif.size[0]//5, pinkGif.size[1]//5)))
+    if app.playerColor == "pink":
+        drawImage(pinkPic, app.pinkx, app.flyy, align="center")
+    else: drawImage(pinkPic, app.pinkx, app.flyy, align="center", opacity=60)
+
+    orangeGif = Image.open("images/orange.gif")
+    orangePic = CMUImage(orangeGif.resize((orangeGif.size[0]//5, orangeGif.size[1]//5)))
     if app.playerColor == "orange":
-        app.player.draw(app.orangex, app.flyy, "orange", 100)
-    else: app.player.draw(app.orangex, app.flyy, "orange", 60)
+        drawImage(orangePic, app.orangex, app.flyy, align="center")
+    else: drawImage(orangePic, app.orangex, app.flyy, align="center", opacity=60)
 
-    if app.playerColor == "magenta":
-        app.player.draw(app.pinkx, app.flyy, "magenta", 100)
-    else: app.player.draw(app.pinkx, app.flyy, "magenta", 60)
+    tealGif = Image.open("images/light-teal.gif")
+    tealPic = CMUImage(tealGif.resize((tealGif.size[0]//5, tealGif.size[1]//5)))
+    if app.playerColor == "lightTeal":
+        drawImage(tealPic, app.lightTealx, app.flyy, align="center")
+    else: drawImage(tealPic, app.lightTealx, app.flyy, align="center", opacity=60)
 
+    blueGif = Image.open("images/blue.gif")
+    bluePic = CMUImage(blueGif.resize((blueGif.size[0]//5, blueGif.size[1]//5)))
     if app.playerColor == "blue":
-        app.player.draw(app.bluex, app.flyy, "blue", 100)
-    else: app.player.draw(app.bluex, app.flyy, "blue", 60)
+        drawImage(bluePic, app.bluex, app.flyy, align="center")
+    else: drawImage(bluePic, app.bluex, app.flyy, align="center", opacity=60)
 
     # how to play
     drawLabel("Tips", 0.5*app.width, 0.6*app.height, size=24, bold=True)
