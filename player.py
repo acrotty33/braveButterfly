@@ -69,7 +69,7 @@ class Player:
         butterfly = self.spriteList[self.spriteCounter]
         drawImage(butterfly, x, y, align="center")
     
-    # manages player falling
+    # manages player falling + sprite movement
     def takeStep(self):
         self.stepCounter += 1
         if self.stepCounter >= 10:
