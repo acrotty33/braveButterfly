@@ -40,6 +40,7 @@ class Obstacle:
                 return True
         return False
 
+
 class Wasp(Obstacle):
 
     # constructor
@@ -83,7 +84,7 @@ class Wasp(Obstacle):
     
     def draw(self):
         drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
-        
+
 
 class Web(Obstacle):
 
@@ -123,6 +124,7 @@ class Web(Obstacle):
         #         self.dx = -6
         #     else:
         #         self.dx = -7
+
 
 class Net(Obstacle):
 
