@@ -31,40 +31,43 @@ def restartApp(app):
     app.stepsPerSecond = 30
     app.numFlowersCaught = 0
 
-    app.startTime = None
-    app.stopTime = None
-    app.timeStopped = 0
-    app.timeSurvived = 0
+    app.timeToSurvive = 60
+    app.startTime = app.stopTime = None
+    app.timeStopped = app.timeSurvived = 0
     app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
 
     app.freqObstacles = 4 # every [num] steps, generate an obstacle
     app.freqFlowers = 5
-    app.numObstacles = 9
+    app.numObstacles = 8
     app.numFlowers = 3
 
     app.startMenu = True
-    app.gameOver = False
-    app.paused = False
-    app.won = False
+    app.customDiff = app.gameOver = app.paused = app.won = False
     app.death = 0 # refers to type of death for death screen
 
     # difficulty selection + coords
-    app.difficulty = 0 # 0 = easy, 1 = medium, 2 = hard, 3+ = custom MAKE IT NONE
+    app.difficulty = 0 # 0 = easy, 1 = medium, 2 = hard, 3 = custom
     app.diffy = 0.3*app.height
-    app.easyx = 0.2*app.width
-    app.medx = 0.4*app.width
-    app.hardx = 0.6*app.width
-    app.customx = 0.8*app.width
-    app.isHighlighting = None
+    app.easyx, app.medx = 0.2*app.width, 0.4*app.width
+    app.hardx, app.customx = 0.6*app.width, 0.8*app.width
 
     # butterfly color selection coords
     app.playerColor = "red"
     app.flyy = 0.5*app.height
-    app.redx = (1/6)*app.width
-    app.pinkx = (2/6)*app.width
-    app.orangex = (3/6)*app.width
-    app.lightTealx = (4/6)*app.width
+    app.redx, app.pinkx = (1/6)*app.width, (2/6)*app.width
+    app.orangex, app.lightTealx = (3/6)*app.width, (4/6)*app.width
     app.bluex = (5/6)*app.width
+
+    # custom difficulty coords
+    app.speedy = 0.3*app.width # wasp, net, web
+    app.waspx, app.netx, app.webx = 0.2*app.width, 0.5*app.width, 0.8*app.width
+    app.othery = 0.7*app.height
+    app.timex, app.energyx = 0.25*app.width, 0.75*app.width
+    app.waspSpeed = -5
+    app.netSpeed = -4
+
+    # custom difficulty selection/hightlighting
+    app.customSelecting = None
 
     # obstacles
     app.waspImage = CMUImage(Image.open("images/waspNoBG.png"))
@@ -76,16 +79,19 @@ def restartApp(app):
     app.pinkFlower = CMUImage(Image.open("images/pinkFlowerNoBG.png"))
 
     app.player = Player()
+    app.firstPlayerSpeed = -3
+    app.nextPlayerSpeed = 0
+    app.energyLoss = 0.25
 
 # check win/lose, summon/remove obstacles and flowers
 def onStep(app):
     if app.startTime != None:
          app.startMenu = False
-    if not app.paused and not app.startMenu:
+    if not app.paused and not app.startMenu and not app.customDiff:
         app.player.takeStep()
     if app.gameOver: return
 
-    if not app.startMenu:
+    if not app.startMenu and not app.customDiff:
         # making sure timer doesn't keep going when paused/over
         if not app.paused and not app.gameOver:
             app.timeSurvived  = time.time() - app.startTime - app.timeStopped
@@ -93,8 +99,14 @@ def onStep(app):
             app.timeStopped = time.time() - app.stopTime
     
         # player won
-        if app.timeSurvived >= 60:
+        if app.timeSurvived >= app.timeToSurvive:
             app.won = True
+        
+        # player speed increase
+        if app.timeSurvived > app.timeToSurvive*(2/3):
+            app.nextPlayerSpeed = app.firstPlayerSpeed - 2
+        elif app.timeSurvived > app.timeToSurvive*(1/3):
+            app.nextPlayerSpeed = app.firstPlayerSpeed - 1
 
         # summoning obstacles smartly
         numSummoning = random.randrange(1, app.numObstacles) # number of obstacles
@@ -184,6 +196,8 @@ def onKeyPress(app, key):
 def redrawAll(app):
     if app.startMenu:
         drawStartMenu(app)
+    elif app.customDiff:
+        drawCustomScreen(app)
     elif app.won:
         drawWinScreen(app)
     else:
@@ -218,6 +232,8 @@ def onMousePress(app, mousex, mousey):
             app.difficulty = 2
         elif distance(mousex, mousey, app.customx, app.diffy) < wordRadius:
             app.difficulty = 3
+            app.customDiff = True
+            app.startMenu = False
         
         # player color selection
         if distance(mousex, mousey, app.redx, app.flyy) < wordRadius:
@@ -234,6 +250,22 @@ def onMousePress(app, mousex, mousey):
         # start button
         if distance(mousex, mousey, app.width/2, 0.9*app.height) < wordRadius:
             app.startTime = time.time()
+    
+    # in custom difficulty menu
+    if app.customDiff:
+        # back button, takes you back to start menu
+        if distance(mousex, mousey, 0.1*app.width, 0.1*app.height) < wordRadius:
+            app.startMenu = True
+        elif distance(mousex, mousey, app.waspx, app.speedy) < 2*wordRadius:
+            app.customSelecting = "wasp"
+        elif distance(mousex, mousey, app.netx, app.speedy) < 2*wordRadius:
+            app.customSelecting = "net"
+        elif distance(mousex, mousey, app.webx, app.speedy) < 2*wordRadius:
+            app.customSelecting = "web"
+        elif distance(mousex, mousey, app.timex, app.othery) < 3*wordRadius:
+            app.customSelecting = "time"
+        elif distance(mousex, mousey, app.energyx, app.othery) < 3*wordRadius:
+            app.customSelecting = "energy"
 
 # generates an obstacle
 def randomObstacle(app, num):
@@ -373,12 +405,76 @@ def drawStartMenu(app):
     drawLabel("Start", 0.5*app.width, 0.9*app.height, size=24, bold=True)
 
 def drawCustomScreen(app):
-    drawLabel("Custom Difficulty", app.width/2, 0.1*app.height, size=48, bold=True)
-    # obstacle start speeds
-    # num obstacles
-    # num flowers
+    # title
+    drawLabel("Custom Difficulty", app.width/2, 0.1*app.height, size=48, 
+              bold=True)
+    drawLabel("Click a heading and type", app.width/2, 0.2*app.height, size=20)
+    
+    # wasp start speed
+    if app.customSelecting == "wasp": # bolding if selected
+        drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
+              size=24, bold=True)
+    else: 
+        drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
+              size=24)
+    drawLabel("Easy: 5", app.waspx-50, app.speedy+25, size=18, fill="gray", 
+              align="left")
+    drawLabel("Medium: 6", app.waspx-50, app.speedy+50, size=18, fill="gray", 
+              align="left")
+    drawLabel("Hard: 7", app.waspx-50, app.speedy+75, size=18, fill="gray", 
+              align="left")
+
+    # net start speed
+    if app.customSelecting == "net": # bolding if selected
+        drawLabel(f"Net speed: {abs(app.netSpeed)}", app.netx, app.speedy, 
+                  size=24, bold=True)
+    else: 
+        drawLabel(f"Net speed: {abs(app.netSpeed)}", app.netx, app.speedy, 
+                  size=24)
+    drawLabel("Easy: 4", app.netx-50, app.speedy+25, size=18, fill="gray", 
+              align="left")
+    drawLabel("Medium: 5", app.netx-50, app.speedy+50, size=18, fill="gray", 
+              align="left")
+    drawLabel("Hard: 6", app.netx-50, app.speedy+75,size=18, fill="gray", 
+              align="left")
+
+    # web start speed
+    if app.customSelecting == "web":
+        drawLabel(f"Web speed: {abs(app.firstPlayerSpeed)}", app.webx, 
+                app.speedy, size=24, bold=True)
+    else:
+        drawLabel(f"Web speed: {abs(app.firstPlayerSpeed)}", app.webx, 
+                app.speedy, size=24)
+    drawLabel("Easy: 3", app.webx-50, app.speedy+25, size=18, fill="gray", 
+              align="left")
+    drawLabel("Medium: 4", app.webx-50, app.speedy+50, size=18, fill="gray", 
+              align="left")
+    drawLabel("Hard: 5", app.webx-50, app.speedy+75, size=18, fill="gray", 
+              align="left")
+    
     # time
+    if app.customSelecting == "time":
+        drawLabel(f"Survival time (in seconds): {app.timeToSurvive}", app.timex, 
+              app.othery, size=24, bold=True)
+    else:
+        drawLabel(f"Survival time (in seconds): {app.timeToSurvive}", app.timex, 
+              app.othery, size=24)
+    drawLabel("Normal: 60", app.timex-50, app.othery+25, fill="gray", size=18, 
+              align="left")
+    
     # energy loss per jump
+    if app.customSelecting == "energy":
+        drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
+              app.othery, size=24, bold=True)
+    else:
+        drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
+              app.othery, size=24)
+    drawLabel("Normal: 0.25", app.energyx-50, app.othery+25, fill="gray", 
+              size=18, align="left")
+    
+
+    # go back button
+    drawLabel("< Back", 0.1*app.width, 0.1*app.height, size=20, bold=True)
 
 # draws and updates player's energy bar
 def drawEnergyBar(app):
@@ -483,10 +579,6 @@ def drawLoseScreen(app):
     
     # restart
     drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
-
-# def makeCMUImage(image, factor):
-#     resize = image.resize((image.size[0]//factor, image.size[1]//factor))
-#     return CMUImage(resize)
 
 # classic distance function
 def distance(x0, y0, x1, y1):

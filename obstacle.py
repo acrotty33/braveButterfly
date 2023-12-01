@@ -73,6 +73,13 @@ class Wasp(Obstacle):
                 self.dx = -8
             else:
                 self.dx = -9
+        if level == 3:
+            if app.timeSurvived < (1/3)*app.timeToSurvive:
+                self.dx = app.waspSpeed
+            elif app.timeSurvived < (2/3)*app.timeToSurvive:
+                self.dx -= 1
+            else:
+                self.dx -= 1
     
     def draw(self):
         drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
@@ -91,27 +98,31 @@ class Web(Obstacle):
         # self.spriteCounter = 0
         # self.stepCounter = 0
         level = app.difficulty
-        if level == 0:
-            if app.timeSurvived < 20: # first level speed
-                self.dx = -3
-            elif app.timeSurvived < 40: # second level speed
-                self.dx = -4
-            else:
-                self.dx = -5
-        if level == 1:
-            if app.timeSurvived < 20: # first level speed
-                self.dx = -4
-            elif app.timeSurvived < 40: # second level speed
-                self.dx = -5
-            else:
-                self.dx = -6
-        if level == 2:
-            if app.timeSurvived < 20: # first level speed
-                self.dx = -5
-            elif app.timeSurvived < 40: # second level speed
-                self.dx = -6
-            else:
-                self.dx = -7
+        if app.nextPlayerSpeed == 0: 
+            self.dx = app.firstPlayerSpeed
+        else: 
+            self.dx = app.nextPlayerSpeed
+        # if level == 0:
+        #     if app.timeSurvived < 20: # first level speed
+        #         self.dx = -3
+        #     elif app.timeSurvived < 40: # second level speed
+        #         self.dx = -4
+        #     else:
+        #         self.dx = -5
+        # if level == 1:
+        #     if app.timeSurvived < 20: # first level speed
+        #         self.dx = -4
+        #     elif app.timeSurvived < 40: # second level speed
+        #         self.dx = -5
+        #     else:
+        #         self.dx = -6
+        # if level == 2:
+        #     if app.timeSurvived < 20: # first level speed
+        #         self.dx = -5
+        #     elif app.timeSurvived < 40: # second level speed
+        #         self.dx = -6
+        #     else:
+        #         self.dx = -7
 
 class Net(Obstacle):
 
@@ -145,6 +156,13 @@ class Net(Obstacle):
                 self.dx = -7
             else:
                 self.dx = -8
+        if level == 3:
+            if app.timeSurvived < (1/3)*app.timeToSurvive:
+                self.dx = app.netSpeed
+            elif app.timeSurvived < (2/3)*app.timeToSurvive:
+                self.dx -= 1
+            else:
+                self.dx -= 1
         
     def draw(self):
         drawImage(self.image, self.x, self.y + 0.75*self.r, width = 4*self.r, height=4*self.r, align="center")
