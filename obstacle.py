@@ -77,9 +77,9 @@ class Wasp(Obstacle):
             if app.timeSurvived < (1/3)*app.timeToSurvive:
                 self.dx = app.waspSpeed
             elif app.timeSurvived < (2/3)*app.timeToSurvive:
-                self.dx -= 1
+                self.dx  = app.waspSpeed - 1
             else:
-                self.dx -= 1
+                self.dx = app.waspSpeed - 2
     
     def draw(self):
         drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")

@@ -1,16 +1,13 @@
 '''
 ISSUES:
-- smart obstacle generation doesn't work when obstacles move at diff speeds
-    - idea: when summoning wasp, check greatest y's for the webs and nets and if the net is after the web, don't summon wasp?
+- when speed increases, the webs overlap
 
 THINGS TO ADD:
-- images: wasp, web, net
-    ## add al the images in on app start so you don't run CMUImage every redrawAll!!! must faster
-    # may be able to add wasp sprite then!!!! :))))
-- custom difficulty selection
-- moving/infinite background -- moves at same speed as webs
+- custom difficulty selection - test speeds
+- moving/infinite background -- moves with speed app.nextPlayerSpeed
+    # in drawBackground(app), which is ALREADY MADE
+- vertical scrolling
 - tutorial/autoplay
-- win screen confetti animation
 '''
 
 from cmu_graphics import *
@@ -87,6 +84,7 @@ def restartApp(app):
 def onStep(app):
     if app.startTime != None:
          app.startMenu = False
+         app.customDiff = False
     if not app.paused and not app.startMenu and not app.customDiff:
         app.player.takeStep()
     if app.gameOver: return
@@ -192,6 +190,42 @@ def onKeyPress(app, key):
         app.paused = not app.paused
     if key == "r":
         restartApp(app)
+    # wasp custom
+    if app.customSelecting == "wasp":
+        speedStr = str(abs(app.waspSpeed))
+        if key.isdigit():
+            speedStr = str(abs(app.waspSpeed)) + key
+            if abs(int(speedStr)) < 15: 
+                app.waspSpeed = -1*int(speedStr)
+        elif key == "backspace" and len(speedStr) > 1:
+            speedStr = speedStr[:len(speedStr)-1]
+            app.waspSpeed = abs(int(speedStr))
+        elif key == "backspace" and len(speedStr) >= 0:
+            app.waspSpeed = 0
+    # net custom
+    if app.customSelecting == "net":
+        speedStr = str(abs(app.netSpeed))
+        if key.isdigit():
+            speedStr = str(abs(app.netSpeed)) + key
+            if abs(int(speedStr)) < 15: 
+                app.netSpeed = -1*int(speedStr)
+        elif key == "backspace" and len(speedStr) > 1:
+            speedStr = speedStr[:len(speedStr)-1]
+            app.netSpeed = abs(int(speedStr))
+        elif key == "backspace" and len(speedStr) >= 0:
+            app.netSpeed = 0
+    # web custom
+    if app.customSelecting == "web":
+        speedStr = str(abs(app.webSpeed))
+        if key.isdigit():
+            speedStr = str(abs(app.webSpeed)) + key
+            if abs(int(speedStr)) < 15: 
+                app.webSpeed = -1*int(speedStr)
+        elif key == "backspace" and len(speedStr) > 1:
+            speedStr = speedStr[:len(speedStr)-1]
+            app.webSpeed = abs(int(speedStr))
+        elif key == "backspace" and len(speedStr) >= 0:
+            app.webSpeed = 0
 
 def redrawAll(app):
     if app.startMenu:
@@ -201,7 +235,7 @@ def redrawAll(app):
     elif app.won:
         drawWinScreen(app)
     else:
-        drawRect(0, 0, app.width, app.height, fill = "lightskyblue")
+        drawBackground(app)
         for obstacle in app.obstacles:
             obstacle.draw()
         for flower in app.flowers:
@@ -266,6 +300,22 @@ def onMousePress(app, mousex, mousey):
             app.customSelecting = "time"
         elif distance(mousex, mousey, app.energyx, app.othery) < 3*wordRadius:
             app.customSelecting = "energy"
+        
+        # time increment button
+        elif (distance(mousex, mousey, app.timex-30, app.othery+75) < 20 and
+              app.timeToSurvive < 300):
+            app.timeToSurvive += 10
+        elif (distance(mousex, mousey, app.timex+30, app.othery+75) < 20 and 
+              app.timeToSurvive > 10):
+            app.timeToSurvive -= 10
+        
+        # energy increment button
+        elif (distance(mousex, mousey, app.energyx-30, app.othery+75) < 20 and
+              app.energyLoss < 9.75):
+            app.energyLoss += 0.25
+        elif (distance(mousex, mousey, app.energyx+30, app.othery+75) < 20 and 
+              app.energyLoss > 0.25):
+            app.energyLoss -= 0.25
 
 # generates an obstacle
 def randomObstacle(app, num):
@@ -335,7 +385,7 @@ def getGreatestY(app):
         return maxObstacle
 
 def drawStartMenu(app):
-    drawRect(0, 0, app.width, app.height, fill = "lightskyblue")
+    drawBackground(app)
     drawLabel("Start Menu", app.width/2, app.height/10, size = 48, 
               bold = True, font="montserrat")
     
@@ -405,6 +455,7 @@ def drawStartMenu(app):
     drawLabel("Start", 0.5*app.width, 0.9*app.height, size=24, bold=True)
 
 def drawCustomScreen(app):
+    drawBackground(app)
     # title
     drawLabel("Custom Difficulty", app.width/2, 0.1*app.height, size=48, 
               bold=True)
@@ -417,12 +468,9 @@ def drawCustomScreen(app):
     else: 
         drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
               size=24)
-    drawLabel("Easy: 5", app.waspx-50, app.speedy+25, size=18, fill="gray", 
-              align="left")
-    drawLabel("Medium: 6", app.waspx-50, app.speedy+50, size=18, fill="gray", 
-              align="left")
-    drawLabel("Hard: 7", app.waspx-50, app.speedy+75, size=18, fill="gray", 
-              align="left")
+    drawLabel("Easy: 5", app.waspx-50, app.speedy+25, size=18, align="left")
+    drawLabel("Medium: 6", app.waspx-50, app.speedy+50, size=18, align="left")
+    drawLabel("Hard: 7", app.waspx-50, app.speedy+75, size=18, align="left")
 
     # net start speed
     if app.customSelecting == "net": # bolding if selected
@@ -431,12 +479,9 @@ def drawCustomScreen(app):
     else: 
         drawLabel(f"Net speed: {abs(app.netSpeed)}", app.netx, app.speedy, 
                   size=24)
-    drawLabel("Easy: 4", app.netx-50, app.speedy+25, size=18, fill="gray", 
-              align="left")
-    drawLabel("Medium: 5", app.netx-50, app.speedy+50, size=18, fill="gray", 
-              align="left")
-    drawLabel("Hard: 6", app.netx-50, app.speedy+75,size=18, fill="gray", 
-              align="left")
+    drawLabel("Easy: 4", app.netx-50, app.speedy+25, size=18, align="left")
+    drawLabel("Medium: 5", app.netx-50, app.speedy+50, size=18, align="left")
+    drawLabel("Hard: 6", app.netx-50, app.speedy+75,size=18, align="left")
 
     # web start speed
     if app.customSelecting == "web":
@@ -445,12 +490,9 @@ def drawCustomScreen(app):
     else:
         drawLabel(f"Web speed: {abs(app.firstPlayerSpeed)}", app.webx, 
                 app.speedy, size=24)
-    drawLabel("Easy: 3", app.webx-50, app.speedy+25, size=18, fill="gray", 
-              align="left")
-    drawLabel("Medium: 4", app.webx-50, app.speedy+50, size=18, fill="gray", 
-              align="left")
-    drawLabel("Hard: 5", app.webx-50, app.speedy+75, size=18, fill="gray", 
-              align="left")
+    drawLabel("Easy: 3", app.webx-50, app.speedy+25, size=18, align="left")
+    drawLabel("Medium: 4", app.webx-50, app.speedy+50, size=18, align="left")
+    drawLabel("Hard: 5", app.webx-50, app.speedy+75, size=18, align="left")
     
     # time
     if app.customSelecting == "time":
@@ -459,8 +501,13 @@ def drawCustomScreen(app):
     else:
         drawLabel(f"Survival time (in seconds): {app.timeToSurvive}", app.timex, 
               app.othery, size=24)
-    drawLabel("Normal: 60", app.timex-50, app.othery+25, fill="gray", size=18, 
-              align="left")
+    drawLabel("Normal: 60", app.timex-50, app.othery+25, size=18, align="left")
+    # plus 10 seconds button
+    buttonRadius = 20
+    drawCircle(app.timex-30, app.othery + 75, buttonRadius, fill="green")
+    drawLabel("+10", app.timex-30, app.othery+75, size=16)
+    drawCircle(app.timex+30, app.othery + 75, buttonRadius, fill="red")
+    drawLabel("-10", app.timex+30, app.othery+75, size=16)
     
     # energy loss per jump
     if app.customSelecting == "energy":
@@ -469,8 +516,12 @@ def drawCustomScreen(app):
     else:
         drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
               app.othery, size=24)
-    drawLabel("Normal: 0.25", app.energyx-50, app.othery+25, fill="gray", 
-              size=18, align="left")
+    drawLabel("Normal: 0.25", app.energyx-50, app.othery+25, size=18, 
+              align="left")
+    drawCircle(app.energyx-30, app.othery + 75, buttonRadius, fill="green")
+    drawLabel("+0.25", app.energyx-30, app.othery+75, size=16)
+    drawCircle(app.energyx+30, app.othery + 75, buttonRadius, fill="red")
+    drawLabel("-0.25", app.energyx+30, app.othery+75, size=16)
     
 
     # go back button
@@ -509,7 +560,7 @@ def drawEnergyBar(app):
 
 # draws and updates the player's time bar (shows how much time they have left)
 def drawTimerBar(app):
-    timeRatio = app.timeSurvived / 60
+    timeRatio = app.timeSurvived / app.timeToSurvive
     color = "blue"
     fullBarHeight = app.height/2 - 50
     barTopX = 20
@@ -526,7 +577,7 @@ def drawTimerBar(app):
                  border=color)
     
     # draw labels
-    timeLeft = 60 - int(app.timeSurvived)
+    timeLeft = app.timeToSurvive - int(app.timeSurvived)
     if app.paused: timeLeft = 60 - int(app.timeSurvived)
     labelX = barTopX + barWidth/2
     labelY = 20 + fullBarHeight + app.height/2
@@ -535,7 +586,7 @@ def drawTimerBar(app):
     
 # draws the win screen: player wins if they survived a minute
 def drawWinScreen(app):
-    drawRect(0, 0, app.width, app.height, fill="lightskyblue")
+    drawBackground(app)
     drawLabel("You won!", app.width/2, app.height/4, size=48, bold=True)
 
     # stats
@@ -547,9 +598,10 @@ def drawWinScreen(app):
     drawLabel(f"Difficulty: {difficulty}", app.width/2, difficultyY, size=24)
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               difficultyY + 30, size=24)
+    drawLabel(f"You survived for {int(app.timeToSurvive)} seconds.", app.width/2, difficultyY+90, size=24)
     
     # restart
-    drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
+    drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24)
 
 # draws lose screen: player loses if they hit obstacle or ran out of energy
 def drawLoseScreen(app):
@@ -576,9 +628,14 @@ def drawLoseScreen(app):
               fill="white")
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               deathY + 90, size=24, fill="white")
+    drawLabel(f"You survived for {int(app.timeSurvived)} seconds.", app.width/2, deathY+120, size=24, fill="white")
     
     # restart
     drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
+
+# draws infinite background
+def drawBackground(app):
+    drawRect(0, 0, app.width, app.height, fill="lightskyblue")
 
 # classic distance function
 def distance(x0, y0, x1, y1):
