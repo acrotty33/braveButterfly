@@ -66,7 +66,8 @@ def restartApp(app):
     app.lightTealx = (4/6)*app.width
     app.bluex = (5/6)*app.width
 
-    # images
+    # obstacles
+    app.waspImage = CMUImage(Image.open("images/waspNoBG.png"))
     app.webImage = CMUImage(Image.open("images/spiderwebNoBG.png"))
     app.netImage = CMUImage(Image.open("images/butterflyNetNoBG.png"))
 

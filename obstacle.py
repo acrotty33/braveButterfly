@@ -3,6 +3,9 @@ import random
 import time
 from PIL import Image
 
+# all obstacle images are from Adobe Stock!!
+# backgrounds removed with: https://www.remove.bg/
+
 class Obstacle:
 
     # constructor
@@ -19,8 +22,8 @@ class Obstacle:
     
     # draws obstacle
     def draw(self):
-        drawCircle(self.x, self.y, self.r, fill = self.color)
-    
+        drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
+
     # removes obstacle if player avoided it
     def obstaclePassed(self):
         if (self.x < 0 - self.r):
@@ -45,8 +48,9 @@ class Wasp(Obstacle):
         self.x = app.width + self.r
         self.y = random.randrange(30, app.height-30)
         # self.color = "yellow"
-        self.spriteCounter = 0
-        self.stepCounter = 0
+        # self.spriteCounter = 0
+        # self.stepCounter = 0
+        self.image = app.waspImage
         level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
@@ -71,26 +75,7 @@ class Wasp(Obstacle):
                 self.dx = -9
     
     def draw(self):
-        # waspGif = Image.open("images/wasp.gif")
-
-        # self.spriteList = [] 
-        # for frame in range(waspGif.n_frames):
-        #     waspGif.seek(frame)
-        #     fr = waspGif.resize((waspGif.size[0]//3, waspGif.size[1]//3))
-        #     fr = CMUImage(fr)
-        #     self.spriteList.append(fr)
-        # wasp = self.spriteList[self.spriteCounter]
-        # drawImage(wasp, self.x, self.y, align="center")
-        drawCircle(self.x, self.y, self.r, fill="yellow")
-    
-    def takeStep(self):
-        self.x += self.dx
-        # self.stepCounter += 1
-        # if self.stepCounter >= 5:
-        #     # sprite movement
-        #     self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
-        #     self.stepCounter = 0
-
+        drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
         
 
 class Web(Obstacle):
@@ -128,15 +113,11 @@ class Web(Obstacle):
             else:
                 self.dx = -7
 
-    def draw(self):
-        drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
-
-
 class Net(Obstacle):
 
     # constructor
     def __init__(self, level):
-        self.r = random.randrange(0.08*app.width, 0.15*app.width)
+        self.r = random.randrange(0.1*app.width, 0.15*app.width)
         self.x = app.width + self.r
         self.y = app.height - self.r
         self.dx = -3

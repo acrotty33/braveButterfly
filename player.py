@@ -30,6 +30,12 @@ class Player:
     
     # draws player, code from animated gif demo lecture
     def draw(self, x, y):
+        # sprites, code is from animated gif lecture demo
+        # pink buttefly: https://tenor.com/view/butterfly-freedom-pretty-nature-fly-gif-14485865
+        # orange butterfly: https://tenor.com/view/butterfly-freedom-pretty-nature-fly-gif-14485862
+        # red butterfly: https://tenor.com/view/butterfly-freedom-pretty-nature-fly-gif-14485863
+        # blue butterfly: https://tenor.com/view/butterfly-blue-butterfly-freedom-pretty-nature-gif-14485845
+        # light teal butterfly: https://tenor.com/view/butterfly-blue-butterfly-freedom-pretty-nature-gif-14485854
         if app.playerColor == "red":
             flyGif = Image.open("images/red.gif")
         elif app.playerColor == "pink":

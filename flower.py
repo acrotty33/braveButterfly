@@ -22,8 +22,7 @@ class Flower:
     
     # draws flower
     def draw(self):
-        #drawCircle(self.x, self.y, self.r, fill = self.color)
-        drawImage(self.image, self.x, self.y, width=self.r*2, height = self.r*2, align="center")
+        drawImage(self.image, self.x, self.y, width=self.r*2.5, height = self.r*2, align="center")
     
     # removes obstacle if player avoided it
     def flowerPassed(self):
