@@ -1,7 +1,6 @@
 from cmu_graphics import *
 import random
 from PIL import Image
-# import time
 
 class Flower:
 
@@ -22,7 +21,8 @@ class Flower:
     
     # draws flower
     def draw(self):
-        drawImage(self.image, self.x, self.y, width=self.r*2.5, height = self.r*2, align="center")
+        drawImage(self.image, self.x, self.y, 
+                  width=self.r*2.5, height = self.r*2, align="center")
     
     # removes obstacle if player avoided it
     def flowerPassed(self):

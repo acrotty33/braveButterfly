@@ -71,7 +71,7 @@ def restartApp(app):
     # obstacles
     app.waspImage = CMUImage(Image.open("images/waspNoBG.png"))
     app.webImage = CMUImage(Image.open("images/spiderwebNoBG.png"))
-    netImage = Image.open("images/butterflyNetNoBG.png")
+    netImage = Image.open("images/butterflyNet2Cropped.png")
     app.netImage = CMUImage(netImage)
     app.flippedNetImage = CMUImage(netImage.transpose(Image.FLIP_TOP_BOTTOM))
 
@@ -354,32 +354,6 @@ def isSurvivable(app, potentialObstacle):
     # get a list of all the x values and radii of obstacles, including potential
     for i in range(len(app.obstacles)):
         curr = app.obstacles[i]
-        #withinSameishX = [curr]
-
-        # makes a list of obstacles within sameish x
-        # sameish x means within curr's x +/- combinedRadii of curr and other
-        # for j in range(i+1, len(potentialObList)):
-        #     other = potentialObList[j]
-        #     combinedRadii = curr.r + other.r
-        #     if (other.x < curr.x + combinedRadii):
-        #         withinSameishX.append(other)
-
-        # # now checking if there's at least one gap between sameishX obstacles
-        # # that the player's jump can fit through
-        # for k in range(len(withinSameishX)):
-        #     if k < len(withinSameishX)-1:
-        #         first = withinSameishX[i]
-        #         next = withinSameishX[k+1]
-        #         y = abs(first.y - next.y)
-        #         r = first.r + next.r
-        #         if y - r > 40: # REPLACE WITH JUMP HEIGHT !!!!!!!
-        #             return True
-        # for l in range(len(potentialObList)):
-        #     check = potentialObList[l]
-        #     y = abs(curr.y - check.y)
-        #     r = curr.r + check.r
-        #     if y - r > 80:
-        #         return True
         if isinstance(curr, Wasp): continue
         if potentialObstacle.x - curr.x > app.width/2: continue
         y = abs(curr.y - potentialObstacle.y)

@@ -77,7 +77,11 @@ class Player:
         for obstacle in obstacles:
             x = self.x - obstacle.x
             y = self.y - obstacle.y
-            if (x**2 + y**2)**0.5 < obstacle.r + self.r - 10:
+            if isinstance(obstacle, Net):
+                factor = 0
+            else:
+                factor = 5
+            if (x**2 + y**2)**0.5 < obstacle.r + self.r - factor:
                 if isinstance(obstacle, Wasp): app.death = 1
                 elif isinstance(obstacle, Web): app.death = 2
                 elif isinstance(obstacle, Net): app.death = 3
@@ -88,7 +92,7 @@ class Player:
     def gotFlower(self, flower):
         x = self.x - flower.x
         y = self.y - flower.y
-        if (x**2 + y**2)**0.5 <= flower.r + 20:
+        if (x**2 + y**2)**0.5 <= flower.r + self.r:
             app.numFlowersCaught += 1
             return True
         return False
