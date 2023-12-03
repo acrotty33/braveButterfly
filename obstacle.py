@@ -7,7 +7,6 @@ from PIL import Image
 # backgrounds removed with: https://www.remove.bg/
 
 class Obstacle:
-
     # constructor
     def __init__(self, app):
         self.x = app.width + 30
@@ -26,7 +25,7 @@ class Obstacle:
 
     # removes obstacle if player avoided it
     def obstaclePassed(self):
-        if (self.x < 0 - self.r):
+        if (self.x < 0 - 2*self.r):
             return True
         return False
     
@@ -92,7 +91,7 @@ class Web(Obstacle):
     def __init__(self, level):
         self.r = random.randrange(0.08*app.width, 0.15*app.width)
         self.x = app.width + self.r
-        self.y = self.r
+        self.y = random.choice((self.r, app.height-self.r))
         self.color = "gray"
         self.image = app.webImage
 
@@ -132,10 +131,15 @@ class Net(Obstacle):
     def __init__(self, level):
         self.r = random.randrange(0.1*app.width, 0.15*app.width)
         self.x = app.width + self.r
-        self.y = app.height - self.r
+        self.y = random.choice((self.r, app.height-self.r))
         self.dx = -3
         self.color = "brown"
-        self.image = app.netImage
+        if self.y > self.r: 
+            self.image = app.netImage
+        else:
+            # flip image if it's on the top of the screen
+            self.image = app.flippedNetImage 
+            self.y -= self.r
         level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed

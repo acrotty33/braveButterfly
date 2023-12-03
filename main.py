@@ -6,6 +6,9 @@ ISSUES:
 THINGS TO ADD:
 - custom difficulty selection
 - moving/infinite background -- moves with speed app.nextPlayerSpeed
+    - tp guide
+    - layers
+    NO BUGSSSS
 - vertical scrolling
 - tutorial/autoplay
 '''
@@ -14,8 +17,7 @@ from cmu_graphics import *
 from player import Player
 from obstacle import *
 from flower import *
-import random
-import time
+import random, time, math
 from PIL import Image
 
 def onAppStart(app):
@@ -56,7 +58,7 @@ def restartApp(app):
     app.bluex = (5/6)*app.width
 
     # custom difficulty coords
-    app.speedy = 0.2*app.width # wasp, net, web
+    app.speedy = 0.25*app.width # wasp, net, web
     app.waspx, app.netx, app.webx = 0.2*app.width, 0.5*app.width, 0.8*app.width
     app.othery = 0.7*app.height
     app.timex, app.energyx = 0.25*app.width, 0.75*app.width
@@ -69,7 +71,9 @@ def restartApp(app):
     # obstacles
     app.waspImage = CMUImage(Image.open("images/waspNoBG.png"))
     app.webImage = CMUImage(Image.open("images/spiderwebNoBG.png"))
-    app.netImage = CMUImage(Image.open("images/butterflyNetNoBG.png"))
+    netImage = Image.open("images/butterflyNetNoBG.png")
+    app.netImage = CMUImage(netImage)
+    app.flippedNetImage = CMUImage(netImage.transpose(Image.FLIP_TOP_BOTTOM))
 
     # flowers
     app.redFlower = CMUImage(Image.open("images/redFlowerNoBG.png"))
@@ -105,19 +109,14 @@ def onStep(app):
         
         # player speed increase
         if app.timeSurvived > app.timeToSurvive*(2/3):
-            print("2/3")
+            #print("2/3")
             app.nextPlayerSpeed = app.firstPlayerSpeed - 2
         elif app.timeSurvived > app.timeToSurvive*(1/3):
-            print("1/3")
+            #print("1/3")
             app.nextPlayerSpeed = app.firstPlayerSpeed - 1
-        
-        # TEST
-        print("wasp", app.waspSpeed)
-        print("web", app.firstPlayerSpeed)
-        print("net", app.netSpeed)
 
-        # summoning obstacles smartly
-        numSummoning = random.randrange(1, app.numObstacles) # number of obstacles
+        # removing obstacles
+        numSummoning = random.randrange(1, app.numObstacles) # num of obstacles
         if not app.paused:
             # removing obstacles if player passes them
             obIndex = 0
@@ -125,7 +124,7 @@ def onStep(app):
                 obstacle = app.obstacles[obIndex]
                 obstacle.takeStep()
                 if obstacle.obstaclePassed():
-                    app.obstacles.pop(obIndex) # delete obstacle when it's passed
+                    app.obstacles.pop(obIndex) # delete obstacle when passed
                 else:
                     obIndex += 1
             
@@ -135,7 +134,7 @@ def onStep(app):
                 flower = app.flowers[flowerIndex]
                 flower.takeStep()
                 if flower.flowerPassed():
-                    app.flowers.pop(flowerIndex) # delete flower when it's passed
+                    app.flowers.pop(flowerIndex) # delete flower when passed
                 else:
                     flowerIndex += 1
         
@@ -146,10 +145,12 @@ def onStep(app):
                 # makes sure obstacles aren't conjoined
                 for ob in app.obstacles:
                     if type(ob) == Wasp: continue
-                    while obstacle.inOtherObstacle(ob) or not isSurvivable(app, obstacle):
+                    while (obstacle.inOtherObstacle(ob) or 
+                            not isSurvivable(app, obstacle)):
                         if obstacle.inOtherObstacle(ob):
                             obstacle.x += ob.r
-                        elif isinstance(obstacle, Web) and not isSurvivable(app, obstacle):
+                        elif (isinstance(obstacle, Web) and 
+                              not isSurvivable(app, obstacle)):
                             obstacle.r -= 10
                             obstacle.y = obstacle.r
                         elif isinstance(obstacle, Net):
@@ -193,6 +194,7 @@ def onStep(app):
 
 # spacebar to jump, r to reset, p to pause
 def onKeyPress(app, key):
+    # basic mechancis
     if key == "space" and not app.gameOver and not app.paused:
         app.player.jump()
     if key == "p" and not app.gameOver:
@@ -200,36 +202,39 @@ def onKeyPress(app, key):
         app.paused = not app.paused
     if key == "r":
         restartApp(app)
-    # wasp custom
+    
+    # wasp customizing
     if app.customSelecting == "wasp":
         speedStr = str(abs(app.waspSpeed))
         if key.isdigit():
             speedStr = str(abs(app.waspSpeed)) + key
-            if abs(int(speedStr)) < 15: 
+            if abs(int(speedStr)) <= 15: 
                 app.waspSpeed = -1*int(speedStr)
         elif key == "backspace" and len(speedStr) > 1:
             speedStr = speedStr[:len(speedStr)-1]
             app.waspSpeed = abs(int(speedStr))
         elif key == "backspace" and len(speedStr) >= 0:
             app.waspSpeed = 0
-    # net custom
+    
+    # net customizing 
     if app.customSelecting == "net":
         speedStr = str(abs(app.netSpeed))
         if key.isdigit():
             speedStr = str(abs(app.netSpeed)) + key
-            if abs(int(speedStr)) < 15: 
+            if abs(int(speedStr)) <= 15: 
                 app.netSpeed = -1*int(speedStr)
         elif key == "backspace" and len(speedStr) > 1:
             speedStr = speedStr[:len(speedStr)-1]
             app.netSpeed = abs(int(speedStr))
         elif key == "backspace" and len(speedStr) >= 0:
             app.netSpeed = 0
-    # web custom
+    
+    # web customizing
     if app.customSelecting == "web":
         speedStr = str(abs(app.firstPlayerSpeed))
         if key.isdigit():
             speedStr = str(abs(app.firstPlayerSpeed)) + key
-            if abs(int(speedStr)) < 15: 
+            if abs(int(speedStr)) <= 15: 
                 app.firstPlayerSpeed = -1*int(speedStr)
         elif key == "backspace" and len(speedStr) > 1:
             speedStr = speedStr[:len(speedStr)-1]
@@ -464,6 +469,7 @@ def drawStartMenu(app):
     # start button
     drawLabel("Start", 0.5*app.width, 0.9*app.height, size=24, bold=True)
 
+# draws the menu for custom difficulty
 def drawCustomScreen(app):
     drawBackground(app, True)
     # title
@@ -471,6 +477,8 @@ def drawCustomScreen(app):
               bold=True)
     drawLabel("Speeds: Click a heading and type", app.width/2, 0.2*app.height, 
               size=24, bold=True)
+    drawLabel("The max speed is 15.", app.width/2, 0.2*app.height+30, size=24, 
+              bold=True)
     drawLabel("Click a heading and increment with the buttons", app.width/2, 0.6*app.height, 
               size=24, bold=True)
     
@@ -558,13 +566,16 @@ def drawEnergyBar(app):
     elif app.player.energy < 6:
         color = "yellow"
     else:
-        color = "green"
-    
-    # draw used energy
+        color = "lime"
     barTopX = 20
     barTopY = 10
     barWidth = 20
     fullBarHeight = app.height/2-50
+
+    # draw opaque sidebar
+    drawRect(0, 0, barWidth+40, app.height, fill="white", opacity=30)
+    
+    # draw used energy
     drawRect(barTopX, barTopY, barWidth, fullBarHeight, fill=None, border=color)
 
     # draw energy that's still left
@@ -656,6 +667,8 @@ def drawLoseScreen(app):
     drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
 
 # draws infinite background
+# Article in TP Guide: https://adrianb.io/2014/08/09/perlinnoise.html
+# Video conceptual understanding of Perlin noise: https://www.youtube.com/watch?v=Qf4dIN99e2w&list=PLRqwX-V7Uu6bgPNQAdxQZpJuJCjeOr7VD&index=1
 def drawBackground(app, needsOpacity):
     #drawRect(0, 0, app.width, app.height, fill="lightskyblue")
     drawImage(app.backgroundImage, app.width/2, app.height/2, align="center")
