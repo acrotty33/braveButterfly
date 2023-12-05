@@ -1,7 +1,7 @@
 from cmu_graphics import *
 from player import Player
-from obstacle import *
-from flower import *
+from obstacle import Obstacle, Wasp, Web, Net
+from flower import Flower, BigFlower, SmallFlower
 import random, time
 from PIL import Image
 
@@ -216,13 +216,13 @@ def onMousePress(app, mousex, mousey):
     if app.startMenu:
         # difficulty selection
         if distance(mousex, mousey, app.easyx, app.diffy) < wordRadius:
-            app.difficulty = 0
+            app.difficulty = 0 # easy
         elif distance(mousex, mousey, app.medx, app.diffy) < wordRadius:
-            app.difficulty = 1
+            app.difficulty = 1 # medium
         elif distance(mousex, mousey, app.hardx, app.diffy) < wordRadius:
-            app.difficulty = 2
+            app.difficulty = 2 # hard
         elif distance(mousex, mousey, app.customx, app.diffy) < wordRadius:
-            app.difficulty = 3
+            app.difficulty = 3 # custom difficulty
             app.customDiff = True
             app.startMenu = False
         
@@ -273,6 +273,9 @@ def onMousePress(app, mousex, mousey):
         elif (distance(mousex, mousey, app.energyx+30, app.othery+100) < 20 and 
               app.energyLoss > 0.25):
             app.energyLoss -= 0.25
+
+
+
 
 # generates an obstacle
 def randomObstacle(app, num):
@@ -589,6 +592,9 @@ def distance(x0, y0, x1, y1):
     x = x0 - x1
     y = y0 - y1
     return (x**2 + y**2)**0.5
+
+
+
 
 # ON STEP FUNCTIONS BELOW
 
