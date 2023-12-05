@@ -23,10 +23,8 @@ def restartApp(app):
     app.timeStopped = app.timeSurvived = 0
     app.lastSummonedObstacle = app.lastSummonedFlower = time.time()
 
-    app.freqObstacles = 4 # every [num] steps, generate an obstacle
-    app.freqFlowers = 5
     app.numObstacles = 6
-    app.numFlowers = 3
+    app.numFlowers = 4
 
     app.startMenu = True
     app.customDiff = app.gameOver = app.paused = app.won = False
@@ -97,9 +95,9 @@ def onStep(app):
             app.won = True
         
         # suction obstacle time
-        if (app.timeSurvived % 60) > 5 and (app.timeSurvived % 60) < 10:
+        if (app.timeSurvived % 60) > 35 and (app.timeSurvived % 60) < 40:
             app.aboutToSuction = True
-        elif (app.timeSurvived % 60) > 10 and (app.timeSurvived % 60) < 17:
+        elif (app.timeSurvived % 60) > 40 and (app.timeSurvived % 60) < 47:
             app.aboutToSuction = False
             app.suction = True
         else: 
@@ -159,6 +157,7 @@ def redrawAll(app):
     elif app.won:
         drawWinScreen(app)
     else:
+        #if app.won: drawWinScreen(app)
         drawBackground(app, False)
         for wasp in app.wasps:
             wasp.draw()
@@ -174,7 +173,7 @@ def redrawAll(app):
         if app.aboutToSuction:
             drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
             drawLabel("You're about to get sucked down to the bottom! Fight it!", 
-                      0.5*app.width, 0.4*app.height, size=30, bold=True)
+                      0.5*app.width, 0.4*app.height, size=26, bold=True, fill="white")
         
         if app.suction:
             drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
