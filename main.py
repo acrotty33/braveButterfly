@@ -2,6 +2,7 @@ from cmu_graphics import *
 from player import Player
 from obstacle import Obstacle, Wasp, Web, Net
 from flower import Flower, BigFlower, SmallFlower
+from queue import SimpleQueue
 import random, time
 from PIL import Image
 
@@ -97,26 +98,19 @@ def onStep(app):
         
         # player speed increase
         if app.timeSurvived > app.timeToSurvive*(2/3):
-            #print("2/3")
             app.nextPlayerSpeed = app.firstPlayerSpeed - 2
         elif app.timeSurvived > app.timeToSurvive*(1/3):
-            #print("1/3")
             app.nextPlayerSpeed = app.firstPlayerSpeed - 1
 
         if not app.paused:
-            # moving the background
             moveBackground(app)
             
-            # removing obstacles if player passes them
             removeObstacles(app)
             
-            # removing flowers if player passes them
-            removeFlowers(app)
+            updateFlowerPosition(app)
         
-            # summoning obstacles
             summonObstacles(app)
             
-            # summoning flowers
             summonFlowers(app)
             
             # if player touched a flower, give player energy
@@ -618,15 +612,20 @@ def removeObstacles(app):
             obIndex += 1
 
 # remove flowers once they're passed
-def removeFlowers(app):
-    flowerIndex = 0
-    while flowerIndex < len(app.flowers):
-        flower = app.flowers[flowerIndex]
+def updateFlowerPosition(app):
+    # flowerIndex = 0
+    # while flowerIndex < len(app.flowers):
+    #     flower = app.flowers[flowerIndex]
+    #     flower.takeStep()
+    #     if flower.flowerPassed():
+    #         app.flowers.pop(flowerIndex) # delete flower when passed
+    #     else:
+    #         flowerIndex += 1
+    for flower in app.flowers:
         flower.takeStep()
-        if flower.flowerPassed():
-            app.flowers.pop(flowerIndex) # delete flower when passed
-        else:
-            flowerIndex += 1
+    if len(app.flowers) > 0:
+        if app.flowers[0].x < 0:
+            app.flowers.pop(0)
 
 # summoning obstacles survivably
 def summonObstacles(app):
@@ -664,13 +663,18 @@ def summonFlowers(app):
 
 # if a player got a flower, give them energy
 def updateEnergy(app):
-    i = 0 
-    while i < len(app.flowers):
-        if app.player.gotFlower(app.flowers[i]):
-            app.player.addEnergy(app.flowers[i])
-            app.flowers.pop(i)
-        else:
-            i += 1 
+    # i = 0 
+    # while i < len(app.flowers):
+    #     if app.player.gotFlower(app.flowers[i]):
+    #         app.player.addEnergy(app.flowers[i])
+    #         app.flowers.pop(i)
+    #     else:
+    #         i += 1 
+    if len(app.flowers) > 0:
+        if app.player.gotFlower(app.flowers[0]):
+            app.player.addEnergy(app.flowers[0])
+            app.flowers.pop(0)
+
 
 def main():
     runApp(width = 800, height = 600)
