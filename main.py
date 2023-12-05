@@ -11,7 +11,6 @@ def onAppStart(app):
 
 # initialize app variables
 def restartApp(app):
-    #app.obstacles = []
     app.flowers = []
     app.wasps = []
     app.webs = []
@@ -95,13 +94,7 @@ def onStep(app):
         # player won
         if app.timeSurvived >= app.timeToSurvive:
             app.won = True
-        
-        # player speed increase
-        # if app.timeSurvived > app.timeToSurvive*(2/3):
-        #     app.nextPlayerSpeed = app.firstPlayerSpeed - 2
-        # elif app.timeSurvived > app.timeToSurvive*(1/3):
-        #     app.nextPlayerSpeed = app.firstPlayerSpeed - 1
-
+    
         if not app.paused:
             moveBackground(app)
             
@@ -141,45 +134,6 @@ def onKeyPress(app, key):
         app.paused = not app.paused
     if key == "r":
         restartApp(app)
-    
-    # # wasp customizing
-    # if app.customSelecting == "wasp":
-    #     speedStr = str(abs(app.waspSpeed))
-    #     if key.isdigit():
-    #         speedStr = str(abs(app.waspSpeed)) + key
-    #         if abs(int(speedStr)) <= 15: 
-    #             app.waspSpeed = -1*int(speedStr)
-    #     elif key == "backspace" and len(speedStr) > 1:
-    #         speedStr = speedStr[:len(speedStr)-1]
-    #         app.waspSpeed = abs(int(speedStr))
-    #     elif key == "backspace" and len(speedStr) >= 0:
-    #         app.waspSpeed = 0
-    
-    # # net customizing 
-    # if app.customSelecting == "net":
-    #     speedStr = str(abs(app.netSpeed))
-    #     if key.isdigit():
-    #         speedStr = str(abs(app.netSpeed)) + key
-    #         if abs(int(speedStr)) <= 15: 
-    #             app.netSpeed = -1*int(speedStr)
-    #     elif key == "backspace" and len(speedStr) > 1:
-    #         speedStr = speedStr[:len(speedStr)-1]
-    #         app.netSpeed = abs(int(speedStr))
-    #     elif key == "backspace" and len(speedStr) >= 0:
-    #         app.netSpeed = 0
-    
-    # # web customizing
-    # if app.customSelecting == "web":
-    #     speedStr = str(abs(app.firstPlayerSpeed))
-    #     if key.isdigit():
-    #         speedStr = str(abs(app.firstPlayerSpeed)) + key
-    #         if abs(int(speedStr)) <= 15: 
-    #             app.firstPlayerSpeed = -1*int(speedStr)
-    #     elif key == "backspace" and len(speedStr) > 1:
-    #         speedStr = speedStr[:len(speedStr)-1]
-    #         app.firstPlayerSpeed = abs(int(speedStr))
-    #     elif key == "backspace" and len(speedStr) >= 0:
-    #         app.firstPlayerSpeed = 0
 
 def redrawAll(app):
     if app.startMenu:
@@ -248,22 +202,8 @@ def onMousePress(app, mousex, mousey):
         # back button, takes you back to start menu
         if distance(mousex, mousey, 0.1*app.width, 0.1*app.height) < wordRadius:
             app.startMenu = True
-        
-        # # heading selection
-        # elif distance(mousex, mousey, app.waspx, app.speedy) < 2*wordRadius:
-        #     app.customSelecting = "wasp"
-        # elif distance(mousex, mousey, app.netx, app.speedy) < 2*wordRadius:
-        #     app.customSelecting = "net"
-        # elif distance(mousex, mousey, app.webx, app.speedy) < 2*wordRadius:
-        #     app.customSelecting = "web"
-        # elif distance(mousex, mousey, app.timex, app.othery) < 4*wordRadius:
-        #     app.customSelecting = "time"
-        # elif distance(mousex, mousey, app.energyx, app.othery) < 4*wordRadius:
-        #     app.customSelecting = "energy"
-        
-        # all the 20s below are the radius of the button
 
-        # wasp speed increment button
+        # wasp speed increment button, radius 20
         elif (distance(mousex, mousey, app.waspx-30, app.speedy+120) < 20 and 
               abs(app.waspSpeed) < 15):
             app.waspSpeed -= 1
@@ -271,7 +211,7 @@ def onMousePress(app, mousex, mousey):
               abs(app.waspSpeed) > 5):
             app.waspSpeed += 1
         
-        # web speed increment button
+        # web speed increment button, radius 20
         elif (distance(mousex, mousey, app.webx-30, app.speedy+120) < 20 and 
               abs(app.playerSpeed) < 15):
             app.playerSpeed -= 1
@@ -279,7 +219,7 @@ def onMousePress(app, mousex, mousey):
               abs(app.playerSpeed) > 5):
             app.playerSpeed += 1
         
-        # net speed increment button
+        # net speed increment button, radius 20
         elif (distance(mousex, mousey, app.netx-30, app.speedy+120) < 20 and 
               abs(app.netSpeed) < 15):
             app.netSpeed -= 1
@@ -325,15 +265,7 @@ def randomFlower(num):
 # checks if the obstacles are passable
 def isSurvivable(app, potentialObstacle):
     goodWithNets = goodWithWebs = True
-    # for i in range(len(app.obstacles)):
-    #     curr = app.obstacles[i]
-    #     if isinstance(curr, Wasp): continue
-    #     if (potentialObstacle.x - curr.x) > app.width/2: continue
-    #     y = abs(curr.y - potentialObstacle.y)
-    #     r = curr.r + potentialObstacle.r
-    #     if abs(y - r) < 60:
-    #         return False
-    # return True
+
     if isinstance(potentialObstacle, Wasp): return True
 
     for w in range(len(app.webs)):
@@ -429,18 +361,10 @@ def drawCustomScreen(app):
     # title
     drawLabel("Custom Difficulty", app.width/2, 0.1*app.height, size=48, 
               bold=True)
-    # drawLabel("Speeds: Click a heading and type", app.width/2, 0.2*app.height, 
-    #           size=24, bold=True)
     drawLabel("The min speed is 5, and the max speed is 15.", app.width/2, 
               0.2*app.height+30, size=24, bold=True)
-    # drawLabel("Click a heading and increment with the buttons", app.width/2, 
-    #           0.6*app.height, size=24, bold=True)
     
-    # wasp start speed
-    # if app.customSelecting == "wasp": # bolding if selected
-    #     drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
-    #           size=24, bold=True)
-    # else: 
+    # wasp speed section
     drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
               size=24)
     drawLabel("Easy: 7", app.waspx-50, app.speedy+25, size=18, align="left")
@@ -453,11 +377,7 @@ def drawCustomScreen(app):
                border = "black")
     drawLabel("-1", app.waspx+30, app.speedy+120, size=16)
 
-    # net start speed
-    # if app.customSelecting == "net": # bolding if selected
-    #     drawLabel(f"Net speed: {abs(app.netSpeed)}", app.netx, app.speedy, 
-    #               size=24, bold=True)
-    # else: 
+    # net speed section
     drawLabel(f"Net speed: {abs(app.netSpeed)}", app.netx, app.speedy, 
                   size=24)
     drawLabel("Easy: 6", app.netx-50, app.speedy+25, size=18, align="left")
@@ -470,11 +390,7 @@ def drawCustomScreen(app):
                border = "black")
     drawLabel("-1", app.netx+30, app.speedy+120, size=16)
 
-    # web start speed
-    # if app.customSelecting == "web":
-    #     drawLabel(f"Web speed: {abs(app.playerSpeed)}", app.webx, 
-    #             app.speedy, size=24, bold=True)
-    # else:
+    # web speed section
     drawLabel(f"Web speed: {abs(app.playerSpeed)}", app.webx, 
                 app.speedy, size=24)
     drawLabel("Easy: 5", app.webx-50, app.speedy+25, size=18, align="left")
@@ -487,20 +403,15 @@ def drawCustomScreen(app):
                border = "black")
     drawLabel("-1", app.webx+30, app.speedy+120, size=16)
     
-    # time
+    # time section
     minutes = app.timeToSurvive // 60
     seconds = app.timeToSurvive % 60
-    # if app.customSelecting == "time":
-    #     drawLabel(f"Survival time (min:sec): {minutes}:{seconds}", app.timex, 
-    #           app.othery, size=24, bold=True)
-    # else:
     drawLabel(f"Survival time (min:sec): {minutes}:{seconds}", app.timex, 
               app.othery, size=24)
     drawLabel("Normal: 1:00", app.timex-50, app.othery+25, size=18, 
               align="left")
     drawLabel("The max is 5 minutes.", app.timex, app.othery+50, size=18)
     # +/- 10 seconds buttons
-
     drawCircle(app.timex-30, app.othery + 100, app.buttonRadius, fill="palegreen", 
                border="black")
     drawLabel("+10", app.timex-30, app.othery+100, size=16)
@@ -508,16 +419,13 @@ def drawCustomScreen(app):
                border = "black")
     drawLabel("-10", app.timex+30, app.othery+100, size=16)
     
-    # energy loss per jump
-    # if app.customSelecting == "energy":
-    #     drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
-    #           app.othery, size=24, bold=True)
-    # else:
+    # energy section
     drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
               app.othery, size=24)
     drawLabel("Normal: 0.25", app.energyx-50, app.othery+25, size=18, 
               align="left")
     drawLabel("The max is 10, out of 10 energy points.", app.energyx, app.othery+50, size=18)
+    # +/- 0.25 buttons
     drawCircle(app.energyx-30, app.othery+100, app.buttonRadius, fill="palegreen", 
                border="black")
     drawLabel("+0.25", app.energyx-30, app.othery+100, size=16)
