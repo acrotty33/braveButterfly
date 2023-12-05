@@ -11,8 +11,11 @@ def onAppStart(app):
 
 # initialize app variables
 def restartApp(app):
-    app.obstacles = []
+    #app.obstacles = []
     app.flowers = []
+    app.wasps = []
+    app.webs = []
+    app.nets = []
     app.stepsPerSecond = 30
     app.numFlowersCaught = 0
 
@@ -73,7 +76,6 @@ def restartApp(app):
 
     app.player = Player()
     app.firstPlayerSpeed = app.nextPlayerSpeed = -3
-    #app.nextPlayerSpeed = 0
     app.energyLoss = 0.25
 
 # check win/lose, summon/remove obstacles and flowers
@@ -105,9 +107,9 @@ def onStep(app):
         if not app.paused:
             moveBackground(app)
             
-            removeObstacles(app)
+            updateObstaclePosition(app) # moves obstacles and deletes
             
-            updateFlowerPosition(app)
+            updateFlowerPosition(app) # moves flowers and deletes
         
             summonObstacles(app)
             
@@ -124,10 +126,12 @@ def onStep(app):
         # game over if player hits an obstacle or touches bottom/top of screen
         playerFell = app.player.y >= app.height
         playerTooHigh = app.player.y < 0
-        if app.player.isColliding(app.obstacles) or playerFell or playerTooHigh:
-            if playerFell: app.death = 4
-            elif playerTooHigh: app.death = 5
-            app.gameOver = True
+        if (app.player.isColliding(app.wasps) or 
+            app.player.isColliding(app.webs) or 
+            app.player.isColliding(app.nets) or playerFell or playerTooHigh):
+                if playerFell: app.death = 4
+                elif playerTooHigh: app.death = 5
+                app.gameOver = True
 
 # spacebar to jump, r to reset, p to pause
 def onKeyPress(app, key):
@@ -188,8 +192,12 @@ def redrawAll(app):
         drawWinScreen(app)
     else:
         drawBackground(app, False)
-        for obstacle in app.obstacles:
-            obstacle.draw()
+        for wasp in app.wasps:
+            wasp.draw()
+        for web in app.webs:
+            web.draw()
+        for net in app.nets:
+            net.draw()
         for flower in app.flowers:
             flower.draw()
         drawEnergyBar(app)
@@ -289,16 +297,34 @@ def randomFlower(num):
 
 # checks if the obstacles are passable
 def isSurvivable(app, potentialObstacle):
-    # get a list of all the x values and radii of obstacles, including potential
-    for i in range(len(app.obstacles)):
-        curr = app.obstacles[i]
-        if isinstance(curr, Wasp): continue
+    goodWithNets = goodWithWebs = True
+    # for i in range(len(app.obstacles)):
+    #     curr = app.obstacles[i]
+    #     if isinstance(curr, Wasp): continue
+    #     if (potentialObstacle.x - curr.x) > app.width/2: continue
+    #     y = abs(curr.y - potentialObstacle.y)
+    #     r = curr.r + potentialObstacle.r
+    #     if abs(y - r) < 60:
+    #         return False
+    # return True
+    if isinstance(potentialObstacle, Wasp): return True
+
+    for w in range(len(app.webs)):
+        curr = app.webs[w]
         if (potentialObstacle.x - curr.x) > app.width/2: continue
         y = abs(curr.y - potentialObstacle.y)
         r = curr.r + potentialObstacle.r
         if abs(y - r) < 60:
-            return False
-    return True
+            goodWithWebs = False
+    
+    for n in range(len(app.nets)):
+        curr = app.nets[n]
+        if (potentialObstacle.x - curr.x) > app.width/2: continue
+        y = abs(curr.y - potentialObstacle.y)
+        r = curr.r + potentialObstacle.r
+        if abs(y - r) < 60:
+            goodWithNets = False
+    return goodWithWebs and goodWithNets
 
 def drawStartMenu(app):
     drawBackground(app, True)
@@ -601,15 +627,31 @@ def moveBackground(app):
     elif app.bgx2 <= -0.5*app.width:
         app.bgx2 = app.bgx1 + app.width
 
-def removeObstacles(app):
-    obIndex = 0
-    while obIndex < len(app.obstacles):
-        obstacle = app.obstacles[obIndex]
-        obstacle.takeStep()
-        if obstacle.obstaclePassed():
-            app.obstacles.pop(obIndex) # delete obstacle when passed
-        else:
-            obIndex += 1
+def updateObstaclePosition(app):
+    # obIndex = 0
+    # while obIndex < len(app.obstacles):
+    #     obstacle = app.obstacles[obIndex]
+    #     obstacle.takeStep()
+    #     if obstacle.obstaclePassed():
+    #         app.obstacles.pop(obIndex) # delete obstacle when passed
+    #     else:
+    #         obIndex += 1
+    for wasp in app.wasps:
+        wasp.takeStep()
+    for web in app.webs:
+        web.takeStep()
+    for net in app.nets:
+        net.takeStep()
+
+    if len(app.wasps) > 0:
+        if app.wasps[0].x < -app.wasps[0].r:
+            app.wasps.pop(0)
+    if len(app.webs) > 0:
+        if app.webs[0].x < -app.webs[0].r:
+            app.webs.pop(0)
+    if len(app.nets) > 0:
+        if app.nets[0].x < -app.nets[0].r:
+            app.nets.pop(0)
 
 # remove flowers once they're passed
 def updateFlowerPosition(app):
@@ -631,25 +673,55 @@ def updateFlowerPosition(app):
 def summonObstacles(app):
     numSummoning = random.randrange(1, app.numObstacles) # num of obstacles
     enoughTimePassed = (time.time() - app.lastSummonedObstacle) > 1
-    if enoughTimePassed and (len(app.obstacles) < numSummoning):
+    totalLength = len(app.wasps) + len(app.webs) + len(app.nets)
+    if enoughTimePassed and (totalLength < numSummoning):
         obstacle = randomObstacle(app, random.randrange(10))
         # makes sure obstacles aren't conjoined and are survivable
-        for ob in app.obstacles:
-            if type(ob) == Wasp: continue
-            while (obstacle.inOtherObstacle(ob) or 
-                    not isSurvivable(app, obstacle)):
-                if obstacle.inOtherObstacle(ob):
-                    obstacle.x += ob.r # if conjoined, move it a little
-                elif (isinstance(obstacle, Web) and 
-                        not isSurvivable(app, obstacle)):
+        # for ob in app.obstacles:
+        #     if type(ob) == Wasp: continue
+        #     while (obstacle.inOtherObstacle(ob) or 
+        #             not isSurvivable(app, obstacle)):
+        #         if obstacle.inOtherObstacle(ob):
+        #             obstacle.x += ob.r # if conjoined, move it right a little
+        #         elif (isinstance(obstacle, Web) and 
+        #                 not isSurvivable(app, obstacle)):
+        #             obstacle.r -= 10
+        #             obstacle.y = obstacle.r
+        #         elif isinstance(obstacle, Net):
+        #                 obstacle.r -= 10
+        #                 obstacle.y = app.height-obstacle.r
+        #         else:
+        #             obstacle = randomObstacle(app, random.randrange(10))
+        for web in app.webs:
+            while (obstacle.inOtherObstacle(web) or 
+                   not isSurvivable(app, obstacle)):
+                if obstacle.inOtherObstacle(web):
+                    obstacle.x += web.r
+                elif not isSurvivable(app, obstacle):
                     obstacle.r -= 10
+                    if obstacle.y < 0.5*app.height:
+                        obstacle.y = obstacle.r
+                    else: 
+                        obstacle.y = app.height - obstacle.r
                     obstacle.y = obstacle.r
-                elif isinstance(obstacle, Net):
-                        obstacle.r -= 10
-                        obstacle.y = app.height-obstacle.r
-                else:
-                    obstacle = randomObstacle(app, random.randrange(10))
-        app.obstacles.append(obstacle)
+        
+        for net in app.nets:
+            while (obstacle.inOtherObstacle(net) or 
+                   not isSurvivable(app, obstacle)):
+                if obstacle.inOtherObstacle(net):
+                    obstacle.x += net.r
+                elif not isSurvivable(app, obstacle):
+                    obstacle.r -= 10
+                    if obstacle.y < 0.5*app.height: obstacle.y = obstacle.r
+                    else: obstacle.y = app.height - obstacle.r
+                    #obstacle.y = obstacle.r
+        #app.obstacles.append(obstacle)
+        if isinstance(obstacle, Wasp): 
+            app.wasps.append(obstacle)
+        elif isinstance(obstacle, Web): 
+            app.webs.append(obstacle)
+        else: 
+            app.nets.append(obstacle)
         app.lastSummonedObstacle = time.time()
 
 # summon flowers
