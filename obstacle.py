@@ -1,6 +1,5 @@
 from cmu_graphics import *
 import random
-import time
 from PIL import Image
 
 # wasp and web obstacle images are from Adobe Stock!!
@@ -109,7 +108,7 @@ class Net(Obstacle):
     def __init__(self, level):
         self.r = random.randrange(0.1*app.width, 0.15*app.width)
         self.x = app.width + self.r
-        self.y = random.choice((self.r, app.height-self.r))
+        self.y = random.choice((self.r - 10, app.height-self.r+10)) # 10s are because the image height is two short
         self.dx = -3
         self.color = "brown"
         if self.y > self.r: 

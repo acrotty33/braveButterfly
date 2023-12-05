@@ -1,23 +1,9 @@
-'''
-ISSUES:
-- when speed increases, the webs overlap
-- custom speeds don't increment
-
-THINGS TO ADD:
-- custom difficulty selection
-- moving/infinite background -- moves with speed app.nextPlayerSpeed
-    - tp guide
-    - layers
-    NO BUGSSSS
-- vertical scrolling
-- tutorial/autoplay
-'''
 
 from cmu_graphics import *
 from player import Player
 from obstacle import *
 from flower import *
-import random, time, math
+import random, time
 from PIL import Image
 
 def onAppStart(app):
@@ -37,7 +23,7 @@ def restartApp(app):
 
     app.freqObstacles = 4 # every [num] steps, generate an obstacle
     app.freqFlowers = 5
-    app.numObstacles = 8
+    app.numObstacles = 6
     app.numFlowers = 3
 
     app.startMenu = True
@@ -641,10 +627,7 @@ def drawLoseScreen(app):
     drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
 
 # draws infinite background
-# Article in TP Guide: https://adrianb.io/2014/08/09/perlinnoise.html
-# Video conceptual understanding of Perlin noise: https://www.youtube.com/watch?v=Qf4dIN99e2w&list=PLRqwX-V7Uu6bgPNQAdxQZpJuJCjeOr7VD&index=1
 def drawBackground(app, needsOpacity):
-    #drawRect(0, 0, app.width, app.height, fill="lightskyblue")
     drawImage(app.backgroundImage, app.width/2, app.height/2, align="center")
     
     # opaque rectangle that lets you see text
@@ -661,6 +644,3 @@ def main():
     runApp(width = 800, height = 600)
 
 main()
-#if __name__ == '__main__':
-    #runApp()
-    # cmu_graphics.run()
