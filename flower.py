@@ -37,7 +37,7 @@ class BigFlower(Flower):
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
-        self.dy = 2.5
+        self.dy = random.uniform(2, 3)
         self.energy = 1
         self.image = app.redFlower
 
@@ -52,6 +52,6 @@ class SmallFlower(Flower):
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
-        self.dy = 2
+        self.dy = random.uniform(1, 2)
         self.energy = 0.5
         self.image = app.pinkFlower
