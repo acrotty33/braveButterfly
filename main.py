@@ -31,6 +31,7 @@ def restartApp(app):
     app.startMenu = True
     app.customDiff = app.gameOver = app.paused = app.won = False
     app.death = 0 # refers to type of death for death screen
+    app.suction = False
 
     # difficulty selection + coords
     app.difficulty = 0 # 0 = easy, 1 = medium, 2 = hard, 3 = custom
@@ -94,6 +95,21 @@ def onStep(app):
         # player won
         if app.timeSurvived >= app.timeToSurvive:
             app.won = True
+        
+        # suction obstacle time
+        if (app.timeSurvived % 60) > 5 and (app.timeSurvived % 60) < 10:
+            app.aboutToSuction = True
+        elif (app.timeSurvived % 60) > 10 and (app.timeSurvived % 60) < 17:
+            app.aboutToSuction = False
+            app.suction = True
+        else: 
+            app.aboutToSuction = False
+            app.suction = False
+
+        if app.suction: 
+            app.player.ddy = 0.6 # increased acceleration downwards
+        else:
+            app.player.ddy = 0.2 # normal acceleration downwards
     
         if not app.paused:
             moveBackground(app)
@@ -154,7 +170,15 @@ def redrawAll(app):
             flower.draw()
         drawEnergyBar(app)
         drawTimerBar(app)
+
+        if app.aboutToSuction:
+            drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
+            drawLabel("You're about to get sucked down to the bottom! Fight it!", 
+                      0.5*app.width, 0.4*app.height, size=30, bold=True)
         
+        if app.suction:
+            drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
+
         # draw game over screen
         if app.gameOver: drawLoseScreen(app)
         
@@ -699,7 +723,6 @@ def updateEnergy(app):
         if app.player.gotFlower(app.flowers[0]):
             app.player.addEnergy(app.flowers[0])
             app.flowers.pop(0)
-
 
 def main():
     runApp(width = 800, height = 600)

@@ -26,7 +26,7 @@ class Player:
         self.y = 200
         self.r = 20
         self.dy = 0 # velocity downwords
-        self.ddy = 0.1 # acceleration downwards
+        self.ddy = 0.2 # acceleration downwards
     
     # draws player, code from animated gif demo lecture
     def draw(self, x, y):
@@ -69,7 +69,7 @@ class Player:
     # manages player jumping
     def jump(self):
         self.dy = -4
-        self.ddy = 0.2
+        #self.ddy = 0.2
         self.energy -= app.energyLoss       
     
     # checks if player hit an obstacle

@@ -100,7 +100,7 @@ class Net(Obstacle):
         self.r = random.randrange(0.1*app.width, 0.15*app.width)
         self.x = app.width + self.r
         self.y = random.choice((self.r - 10, app.height-self.r+10)) # 10s are because the image height is too short
-        self.dx = -3
+        self.dx = -6
         if self.y > self.r: 
             self.image = app.netImage
         else: # flip image if it's on the top of the screen
