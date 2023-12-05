@@ -1,6 +1,5 @@
 from cmu_graphics import *
 import random
-from PIL import Image
 
 # wasp and web obstacle images are from Adobe Stock!!
 # backgrounds removed with: https://www.remove.bg/
@@ -11,8 +10,6 @@ class Obstacle:
         self.x = app.width + 30
         self.y = random.randrange(app.height)
         self.dx = -3
-        self.r = random.randrange(30, 80)
-        self.color = "red"
     
     # moves obstacle towards player every step
     def takeStep(self):
@@ -38,7 +35,6 @@ class Obstacle:
             if (x**2 + y**2)**0.5 <= r:
                 return True
         return False
-
 
 class Wasp(Obstacle):
 
@@ -79,8 +75,8 @@ class Wasp(Obstacle):
                 self.dx = app.waspSpeed - 2
     
     def draw(self):
-        drawImage(self.image, self.x, self.y, width = 2*self.r, height=2*self.r, align="center")
-
+        drawImage(self.image, self.x, self.y, 
+                  width = 2*self.r, height=2*self.r, align="center")
 
 class Web(Obstacle):
 
@@ -89,9 +85,7 @@ class Web(Obstacle):
         self.r = random.randrange(0.08*app.width, 0.15*app.width)
         self.x = app.width + self.r
         self.y = random.choice((self.r, app.height-self.r))
-        self.color = "gray"
         self.image = app.webImage
-        level = app.difficulty
         if app.nextPlayerSpeed == 0: 
             self.dx = app.firstPlayerSpeed
         else: 
@@ -108,13 +102,11 @@ class Net(Obstacle):
     def __init__(self, level):
         self.r = random.randrange(0.1*app.width, 0.15*app.width)
         self.x = app.width + self.r
-        self.y = random.choice((self.r - 10, app.height-self.r+10)) # 10s are because the image height is two short
+        self.y = random.choice((self.r - 10, app.height-self.r+10)) # 10s are because the image height is too short
         self.dx = -3
-        self.color = "brown"
         if self.y > self.r: 
             self.image = app.netImage
-        else:
-            # flip image if it's on the top of the screen
+        else: # flip image if it's on the top of the screen
             self.image = app.flippedNetImage 
         level = app.difficulty
         if level == 0:

@@ -1,4 +1,3 @@
-
 from cmu_graphics import *
 from player import Player
 from obstacle import *
@@ -83,7 +82,7 @@ def onStep(app):
     if app.gameOver: return
 
     if not app.startMenu and not app.customDiff:
-        # making sure timer doesn't keep going when paused/over
+        # making sure timer doesn't keep going when paused or game over
         if not app.paused and not app.gameOver:
             app.timeSurvived  = time.time() - app.startTime - app.timeStopped
         else:
@@ -102,7 +101,6 @@ def onStep(app):
             app.nextPlayerSpeed = app.firstPlayerSpeed - 1
 
         # removing obstacles
-        numSummoning = random.randrange(1, app.numObstacles) # num of obstacles
         if not app.paused:
             # removing obstacles if player passes them
             obIndex = 0
@@ -125,23 +123,24 @@ def onStep(app):
                     flowerIndex += 1
         
             # summoning obstacles
-            enoughTimePassed = time.time() - app.lastSummonedObstacle > 1
+            numSummoning = random.randrange(1, app.numObstacles) # num of obstacles
+            enoughTimePassed = (time.time() - app.lastSummonedObstacle) > 1
             if enoughTimePassed and (len(app.obstacles) < numSummoning):
                 obstacle = randomObstacle(app, random.randrange(10))
-                # makes sure obstacles aren't conjoined
+                # makes sure obstacles aren't conjoined and are survivable
                 for ob in app.obstacles:
                     if type(ob) == Wasp: continue
                     while (obstacle.inOtherObstacle(ob) or 
                             not isSurvivable(app, obstacle)):
                         if obstacle.inOtherObstacle(ob):
-                            obstacle.x += ob.r
+                            obstacle.x += ob.r # if conjoined, move it a little
                         elif (isinstance(obstacle, Web) and 
                               not isSurvivable(app, obstacle)):
                             obstacle.r -= 10
                             obstacle.y = obstacle.r
                         elif isinstance(obstacle, Net):
-                            obstacle.r -= 10
-                            obstacle.y = app.height-obstacle.r
+                             obstacle.r -= 10
+                             obstacle.y = app.height-obstacle.r
                         else:
                             obstacle = randomObstacle(app, random.randrange(10))
                 app.obstacles.append(obstacle)
@@ -150,9 +149,9 @@ def onStep(app):
         # summoning flowers
         if not app.paused:
             numFlowersSummoning = random.randrange(0, app.numFlowers)
-            flowerTime = time.time() - app.lastSummonedFlower > 2
+            flowerTime = (time.time() - app.lastSummonedFlower) > 2
             if flowerTime and (len(app.flowers) < numFlowersSummoning):
-                flower = randomFlower(app, random.randrange(10))
+                flower = randomFlower(random.randrange(10))
                 app.flowers.append(flower)
                 app.lastSummonedFlower = time.time()
             
@@ -165,7 +164,7 @@ def onStep(app):
                 else:
                     i += 1
 
-        # full energy depletion = lose condition 
+        # game over if player has no energy left
         if app.player.energy <= 0:
             app.death = 0
             app.gameOver = True
@@ -245,8 +244,7 @@ def redrawAll(app):
         drawTimerBar(app)
         
         # draw game over screen
-        if app.gameOver:
-            drawLoseScreen(app)
+        if app.gameOver: drawLoseScreen(app)
         
         # draw pause screen
         if app.paused:
@@ -320,15 +318,15 @@ def onMousePress(app, mousex, mousey):
 
 # generates an obstacle
 def randomObstacle(app, num):
-    if num < 3: # 30%
+    if num < 2: # 20%
         return Web(app.difficulty)
-    elif num > 8: # 20$
+    elif num > 7: # 30$
         return Net(app.difficulty)
     else: # 50%
         return Wasp(app.difficulty)
 
 # generates a flower
-def randomFlower(app, num):
+def randomFlower(num):
     if num < 7: # 70%
         return SmallFlower()
     else: # 30%
@@ -336,12 +334,11 @@ def randomFlower(app, num):
 
 # checks if the obstacles are passable
 def isSurvivable(app, potentialObstacle):
-    potentialObList = app.obstacles + [potentialObstacle]
     # get a list of all the x values and radii of obstacles, including potential
     for i in range(len(app.obstacles)):
         curr = app.obstacles[i]
         if isinstance(curr, Wasp): continue
-        if potentialObstacle.x - curr.x > app.width/2: continue
+        if (potentialObstacle.x - curr.x) > app.width/2: continue
         y = abs(curr.y - potentialObstacle.y)
         r = curr.r + potentialObstacle.r
         if abs(y - r) < 60:
@@ -349,15 +346,15 @@ def isSurvivable(app, potentialObstacle):
     return True
 
 # from list of obstacles, returns the obstacle with greatest y value 
-def getGreatestY(app):
-    maxY = 0
-    if app.obstacles != []: 
-        maxObstacle = app.obstacles[0]
-        for obstacle in app.obstacles:
-            if obstacle.y > maxY:
-                maxY = obstacle.y
-                maxObstacle = obstacle
-        return maxObstacle
+# def getGreatestY(app):
+#     maxY = 0
+#     if app.obstacles != []: 
+#         maxObstacle = app.obstacles[0]
+#         for obstacle in app.obstacles:
+#             if obstacle.y > maxY:
+#                 maxY = obstacle.y
+#                 maxObstacle = obstacle
+#         return maxObstacle
 
 def drawStartMenu(app):
     drawBackground(app, True)
@@ -439,8 +436,8 @@ def drawCustomScreen(app):
               size=24, bold=True)
     drawLabel("The max speed is 15.", app.width/2, 0.2*app.height+30, size=24, 
               bold=True)
-    drawLabel("Click a heading and increment with the buttons", app.width/2, 0.6*app.height, 
-              size=24, bold=True)
+    drawLabel("Click a heading and increment with the buttons", app.width/2, 
+              0.6*app.height, size=24, bold=True)
     
     # wasp start speed
     if app.customSelecting == "wasp": # bolding if selected
@@ -591,7 +588,8 @@ def drawWinScreen(app):
     drawLabel(f"Difficulty: {difficulty}", app.width/2, difficultyY, size=24)
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               difficultyY + 30, size=24)
-    drawLabel(f"You survived for {int(app.timeToSurvive)} seconds.", app.width/2, difficultyY+90, size=24)
+    drawLabel(f"You survived for {int(app.timeToSurvive)} seconds.", 
+              app.width/2, difficultyY+90, size=24)
     
     # restart
     drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24)
@@ -621,15 +619,16 @@ def drawLoseScreen(app):
               fill="white")
     drawLabel(f"Flowers caught: {app.numFlowersCaught}", app.width/2, 
               deathY + 90, size=24, fill="white")
-    drawLabel(f"You survived for {int(app.timeSurvived)} seconds.", app.width/2, deathY+120, size=24, fill="white")
+    drawLabel(f"You survived for {int(app.timeSurvived)} seconds.", app.width/2,
+               deathY+120, size=24, fill="white")
     
     # restart
-    drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24, fill="white")
+    drawLabel("Press 'r' to restart", app.width/2, 0.8*app.height, size = 24,
+               fill="white")
 
 # draws infinite background
 def drawBackground(app, needsOpacity):
     drawImage(app.backgroundImage, app.width/2, app.height/2, align="center")
-    
     # opaque rectangle that lets you see text
     if needsOpacity: 
         drawRect(0, 0, app.width, app.height, fill="white", opacity=50)

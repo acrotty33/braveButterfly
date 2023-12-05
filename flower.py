@@ -1,18 +1,14 @@
 from cmu_graphics import *
 import random
-from PIL import Image
 
 class Flower:
 
     # constructor
     def __init__(self):
-        self.r = random.randrange(5,10)
         self.x = app.width + self.r
-        self.y = random.randrange(app.height)
+        #self.y = random.randrange(app.height)
         self.dx = -3
         self.dy = 2
-        self.color = "pink"
-        self.energy = 0.5
     
     # moves flower towards player every step
     def takeStep(self):
@@ -42,7 +38,6 @@ class BigFlower(Flower):
         self.y = -self.r
         self.dx = -3
         self.dy = 2
-        self.color = "red"
         self.energy = 1
         self.image = app.redFlower
 
@@ -58,6 +53,5 @@ class SmallFlower(Flower):
         self.y = -self.r
         self.dx = -3
         self.dy = 2
-        self.color = "pink"
         self.energy = 0.5
         self.image = app.pinkFlower
