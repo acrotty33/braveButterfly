@@ -18,7 +18,7 @@ class Flower:
     # draws flower
     def draw(self):
         drawImage(self.image, self.x, self.y, 
-                  width=self.r*2.5, height = self.r*2, align="center")
+                  width=self.r*2.4, height = self.r*2, align="center")
     
     # removes obstacle if player avoided it
     def flowerPassed(self):
@@ -37,7 +37,7 @@ class BigFlower(Flower):
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
-        self.dy = 2
+        self.dy = 2.5
         self.energy = 1
         self.image = app.redFlower
 

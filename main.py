@@ -65,11 +65,14 @@ def restartApp(app):
     app.pinkFlower = CMUImage(Image.open("images/pinkFlowerNoBG.png"))
 
     # background
-    app.backgroundImage = CMUImage(Image.open("images/DALLEforest1.png"))
+    app.backgroundImage = CMUImage(Image.open("images/DALLEforest1R.jpg"))
+    app.bgx1 = 0.5*app.width
+    app.bgx2 = 1.5*app.width
+    app.bgy = app.height/2
 
     app.player = Player()
-    app.firstPlayerSpeed = -3
-    app.nextPlayerSpeed = 0
+    app.firstPlayerSpeed = app.nextPlayerSpeed = -3
+    #app.nextPlayerSpeed = 0
     app.energyLoss = 0.25
 
 # check win/lose, summon/remove obstacles and flowers
@@ -100,69 +103,24 @@ def onStep(app):
             #print("1/3")
             app.nextPlayerSpeed = app.firstPlayerSpeed - 1
 
-        # removing obstacles
         if not app.paused:
+            # moving the background
+            moveBackground(app)
+            
             # removing obstacles if player passes them
-            obIndex = 0
-            while obIndex < len(app.obstacles):
-                obstacle = app.obstacles[obIndex]
-                obstacle.takeStep()
-                if obstacle.obstaclePassed():
-                    app.obstacles.pop(obIndex) # delete obstacle when passed
-                else:
-                    obIndex += 1
+            removeObstacles(app)
             
             # removing flowers if player passes them
-            flowerIndex = 0
-            while flowerIndex < len(app.flowers):
-                flower = app.flowers[flowerIndex]
-                flower.takeStep()
-                if flower.flowerPassed():
-                    app.flowers.pop(flowerIndex) # delete flower when passed
-                else:
-                    flowerIndex += 1
+            removeFlowers(app)
         
             # summoning obstacles
-            numSummoning = random.randrange(1, app.numObstacles) # num of obstacles
-            enoughTimePassed = (time.time() - app.lastSummonedObstacle) > 1
-            if enoughTimePassed and (len(app.obstacles) < numSummoning):
-                obstacle = randomObstacle(app, random.randrange(10))
-                # makes sure obstacles aren't conjoined and are survivable
-                for ob in app.obstacles:
-                    if type(ob) == Wasp: continue
-                    while (obstacle.inOtherObstacle(ob) or 
-                            not isSurvivable(app, obstacle)):
-                        if obstacle.inOtherObstacle(ob):
-                            obstacle.x += ob.r # if conjoined, move it a little
-                        elif (isinstance(obstacle, Web) and 
-                              not isSurvivable(app, obstacle)):
-                            obstacle.r -= 10
-                            obstacle.y = obstacle.r
-                        elif isinstance(obstacle, Net):
-                             obstacle.r -= 10
-                             obstacle.y = app.height-obstacle.r
-                        else:
-                            obstacle = randomObstacle(app, random.randrange(10))
-                app.obstacles.append(obstacle)
-                app.lastSummonedObstacle = time.time()
+            summonObstacles(app)
             
-        # summoning flowers
-        if not app.paused:
-            numFlowersSummoning = random.randrange(0, app.numFlowers)
-            flowerTime = (time.time() - app.lastSummonedFlower) > 2
-            if flowerTime and (len(app.flowers) < numFlowersSummoning):
-                flower = randomFlower(random.randrange(10))
-                app.flowers.append(flower)
-                app.lastSummonedFlower = time.time()
+            # summoning flowers
+            summonFlowers(app)
             
             # if player touched a flower, give player energy
-            i = 0
-            while i < len(app.flowers):
-                if app.player.gotFlower(app.flowers[i]):
-                    app.player.addEnergy(app.flowers[i])
-                    app.flowers.pop(i)
-                else:
-                    i += 1
+            updateEnergy(app)
 
         # game over if player has no energy left
         if app.player.energy <= 0:
@@ -344,17 +302,6 @@ def isSurvivable(app, potentialObstacle):
         if abs(y - r) < 60:
             return False
     return True
-
-# from list of obstacles, returns the obstacle with greatest y value 
-# def getGreatestY(app):
-#     maxY = 0
-#     if app.obstacles != []: 
-#         maxObstacle = app.obstacles[0]
-#         for obstacle in app.obstacles:
-#             if obstacle.y > maxY:
-#                 maxY = obstacle.y
-#                 maxObstacle = obstacle
-#         return maxObstacle
 
 def drawStartMenu(app):
     drawBackground(app, True)
@@ -568,11 +515,13 @@ def drawTimerBar(app):
     
     # draw labels
     timeLeft = app.timeToSurvive - int(app.timeSurvived)
+    minLeft = timeLeft // 60
+    secLeft = timeLeft % 60
     if app.paused: timeLeft = 60 - int(app.timeSurvived)
     labelX = barTopX + barWidth/2
     labelY = 20 + fullBarHeight + app.height/2
     drawLabel("Time", labelX, labelY, size=16, fill=color, bold=True)
-    drawLabel(f"{timeLeft}", labelX, labelY + 15, fill=color, bold=True)
+    drawLabel(f"{minLeft}:{secLeft}", labelX, labelY + 15, fill=color, bold=True)
     
 # draws the win screen: player wins if they survived a minute
 def drawWinScreen(app):
@@ -628,7 +577,9 @@ def drawLoseScreen(app):
 
 # draws infinite background
 def drawBackground(app, needsOpacity):
-    drawImage(app.backgroundImage, app.width/2, app.height/2, align="center")
+    drawImage(app.backgroundImage, app.bgx1, app.bgy, align="center")
+    drawImage(app.backgroundImage, app.bgx2, app.bgy, align="center")
+    #drawImage(app.backgroundImage, app.width/2, app.height/2, align="center")
     # opaque rectangle that lets you see text
     if needsOpacity: 
         drawRect(0, 0, app.width, app.height, fill="white", opacity=50)
@@ -638,6 +589,82 @@ def distance(x0, y0, x1, y1):
     x = x0 - x1
     y = y0 - y1
     return (x**2 + y**2)**0.5
+
+# ON STEP FUNCTIONS BELOW
+
+# move the background
+def moveBackground(app):
+    app.bgx1 += app.nextPlayerSpeed
+    app.bgx2 += app.nextPlayerSpeed
+    if app.bgx1 <= -0.5*app.width:
+        app.bgx1 = app.bgx2 + app.width
+    elif app.bgx2 <= -0.5*app.width:
+        app.bgx2 = app.bgx1 + app.width
+
+def removeObstacles(app):
+    obIndex = 0
+    while obIndex < len(app.obstacles):
+        obstacle = app.obstacles[obIndex]
+        obstacle.takeStep()
+        if obstacle.obstaclePassed():
+            app.obstacles.pop(obIndex) # delete obstacle when passed
+        else:
+            obIndex += 1
+
+# remove flowers once they're passed
+def removeFlowers(app):
+    flowerIndex = 0
+    while flowerIndex < len(app.flowers):
+        flower = app.flowers[flowerIndex]
+        flower.takeStep()
+        if flower.flowerPassed():
+            app.flowers.pop(flowerIndex) # delete flower when passed
+        else:
+            flowerIndex += 1
+
+# summoning obstacles survivably
+def summonObstacles(app):
+    numSummoning = random.randrange(1, app.numObstacles) # num of obstacles
+    enoughTimePassed = (time.time() - app.lastSummonedObstacle) > 1
+    if enoughTimePassed and (len(app.obstacles) < numSummoning):
+        obstacle = randomObstacle(app, random.randrange(10))
+        # makes sure obstacles aren't conjoined and are survivable
+        for ob in app.obstacles:
+            if type(ob) == Wasp: continue
+            while (obstacle.inOtherObstacle(ob) or 
+                    not isSurvivable(app, obstacle)):
+                if obstacle.inOtherObstacle(ob):
+                    obstacle.x += ob.r # if conjoined, move it a little
+                elif (isinstance(obstacle, Web) and 
+                        not isSurvivable(app, obstacle)):
+                    obstacle.r -= 10
+                    obstacle.y = obstacle.r
+                elif isinstance(obstacle, Net):
+                        obstacle.r -= 10
+                        obstacle.y = app.height-obstacle.r
+                else:
+                    obstacle = randomObstacle(app, random.randrange(10))
+        app.obstacles.append(obstacle)
+        app.lastSummonedObstacle = time.time()
+
+# summon flowers
+def summonFlowers(app):
+    numFlowersSummoning = random.randrange(0, app.numFlowers)
+    flowerTime = (time.time() - app.lastSummonedFlower) > 2
+    if flowerTime and (len(app.flowers) < numFlowersSummoning):
+        flower = randomFlower(random.randrange(10))
+        app.flowers.append(flower)
+        app.lastSummonedFlower = time.time()
+
+# if a player got a flower, give them energy
+def updateEnergy(app):
+    i = 0 
+    while i < len(app.flowers):
+        if app.player.gotFlower(app.flowers[i]):
+            app.player.addEnergy(app.flowers[i])
+            app.flowers.pop(i)
+        else:
+            i += 1 
 
 def main():
     runApp(width = 800, height = 600)
