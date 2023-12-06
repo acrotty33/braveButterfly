@@ -5,6 +5,8 @@ from flower import Flower, BigFlower, SmallFlower
 import random, time
 from PIL import Image
 
+''' App functions '''
+
 def onAppStart(app):
     restartApp(app)
 
@@ -46,9 +48,9 @@ def restartApp(app):
 
     # custom difficulty coords
     app.buttonRadius = 25
-    app.speedy = 0.25*app.width # wasp, net, web
+    app.speedy = 0.2*app.width # wasp, net, web
     app.waspx, app.netx, app.webx = 0.2*app.width, 0.5*app.width, 0.8*app.width
-    app.othery = 0.7*app.height
+    app.othery = 0.6*app.height
     app.timex, app.energyx = 0.25*app.width, 0.75*app.width
     app.waspSpeed = -6
     app.netSpeed = -5
@@ -204,10 +206,12 @@ def onMousePress(app, mousex, mousey):
         if distance(mousex, mousey, app.easyx, app.diffy) < wordRadius:
             app.difficulty = 0 # easy
             app.timeToSurvive = 60
+            app.energyLoss = 0.1
             app.playerSpeed = -4
         elif distance(mousex, mousey, app.medx, app.diffy) < wordRadius:
             app.difficulty = 1 # medium
             app.timeToSurvive = 90
+            app.energyLoss = 0.2
             app.playerSpeed = -5
         elif distance(mousex, mousey, app.hardx, app.diffy) < wordRadius:
             app.difficulty = 2 # hard
@@ -247,7 +251,7 @@ def onMousePress(app, mousex, mousey):
               abs(app.waspSpeed) < 15):
             app.waspSpeed -= 1
         elif (distance(mousex, mousey, app.waspx+30, app.speedy+120) < 20 and 
-              abs(app.waspSpeed) > 5):
+              abs(app.waspSpeed) > 4):
             app.waspSpeed += 1
         
         # web speed increment button, radius 20
@@ -255,7 +259,7 @@ def onMousePress(app, mousex, mousey):
               abs(app.playerSpeed) < 15):
             app.playerSpeed -= 1
         elif (distance(mousex, mousey, app.webx+30, app.speedy+120) < 20 and 
-              abs(app.playerSpeed) > 5):
+              abs(app.playerSpeed) > 4):
             app.playerSpeed += 1
         
         # net speed increment button, radius 20
@@ -263,29 +267,29 @@ def onMousePress(app, mousex, mousey):
               abs(app.netSpeed) < 15):
             app.netSpeed -= 1
         elif (distance(mousex, mousey, app.netx+30, app.speedy+120) < 20 and 
-              abs(app.netSpeed) > 5):
+              abs(app.netSpeed) > 4):
             app.netSpeed += 1
         
         # time increment button
-        elif (distance(mousex, mousey, app.timex-30, app.othery+100) < 20 and
-              app.timeToSurvive < 300):
+        elif (distance(mousex, mousey, app.timex-30, app.othery+140) < 20 and
+              app.timeToSurvive < 300): # 300 seconds = 5 min
             app.timeToSurvive += 10
-        elif (distance(mousex, mousey, app.timex+30, app.othery+100) < 20 and 
+        elif (distance(mousex, mousey, app.timex+30, app.othery+140) < 20 and 
               app.timeToSurvive > 10):
             app.timeToSurvive -= 10
         
         # energy increment button
-        elif (distance(mousex, mousey, app.energyx-30, app.othery+100) < 20 and
+        elif (distance(mousex, mousey, app.energyx-30, app.othery+140) < 20 and
               app.energyLoss < 1):
             app.energyNumerator += 1
             app.energyLoss = app.energyNumerator / 10
-        elif (distance(mousex, mousey, app.energyx+30, app.othery+100) < 20 and 
+        elif (distance(mousex, mousey, app.energyx+30, app.othery+140) < 20 and 
               app.energyLoss > 0):
             app.energyNumerator -= 1
             app.energyLoss = app.energyNumerator / 10
 
 
-
+''' Helpers '''
 
 # generates a pseudorandom obstacle
 def randomObstacle(app, num):
@@ -328,10 +332,14 @@ def isSurvivable(app, potentialObstacle):
             goodWithNets = False
     return goodWithWebs and goodWithNets
 
+# classic distance function
+def distance(x0, y0, x1, y1):
+    x = x0 - x1
+    y = y0 - y1
+    return (x**2 + y**2)**0.5
 
 
-
-''' DRAW FUNCTIONS '''
+''' Draw functions '''
 
 def drawStartMenu(app):
     drawBackground(app, True)
@@ -409,8 +417,8 @@ def drawCustomScreen(app):
     # title
     drawLabel("Custom Difficulty", app.width/2, 0.1*app.height, size=48, 
               bold=True)
-    drawLabel("The min speed is 5, and the max speed is 15.", app.width/2, 
-              0.2*app.height+30, size=24, bold=True)
+    drawLabel("The min speed is 4, and the max speed is 15.", app.width/2, 
+              0.15*app.height+30, size=24, bold=True)
     
     # wasp speed section
     drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
@@ -457,30 +465,34 @@ def drawCustomScreen(app):
     seconds = app.timeToSurvive % 60
     drawLabel(f"Survival time (min:sec): {minutes}:{seconds}", app.timex, 
               app.othery, size=24)
-    drawLabel("Normal: 1:00", app.timex-50, app.othery+25, size=18, 
-              align="left")
-    drawLabel("The max is 5 minutes.", app.timex, app.othery+50, size=18)
+    # drawLabel("Normal: 1:00", app.timex-50, app.othery+25, size=18, 
+    #           align="left")
+    drawLabel("Easy: 1:00", app.timex-50, app.othery+25, size=18, align="left")
+    drawLabel("Medium: 1:30", app.timex-50, app.othery+50, size=18, align="left")
+    drawLabel("Hard: 2:00", app.timex-50, app.othery+75, size=18, align="left")
+    drawLabel("The max is 5 minutes.", app.timex, app.othery+100, size=18)
     # +/- 10 seconds buttons
-    drawCircle(app.timex-30, app.othery + 100, app.buttonRadius, fill="palegreen", 
+    drawCircle(app.timex-30, app.othery + 140, app.buttonRadius, fill="palegreen", 
                border="black")
-    drawLabel("+10", app.timex-30, app.othery+100, size=16)
-    drawCircle(app.timex+30, app.othery + 100, app.buttonRadius, fill="tomato", 
+    drawLabel("+10", app.timex-30, app.othery+140, size=16)
+    drawCircle(app.timex+30, app.othery + 140, app.buttonRadius, fill="tomato", 
                border = "black")
-    drawLabel("-10", app.timex+30, app.othery+100, size=16)
+    drawLabel("-10", app.timex+30, app.othery+140, size=16)
     
     # energy section
     drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
               app.othery, size=24)
-    drawLabel("Normal: 0.2", app.energyx-50, app.othery+25, size=18, 
-              align="left")
-    drawLabel("The max is 1 (out of 10).", app.energyx, app.othery+50, size=18)
+    drawLabel("Easy: 0.1", app.energyx-50, app.othery+25, size=18, align="left")
+    drawLabel("Medium: 0.2", app.energyx-50, app.othery+50, size=18, align="left")
+    drawLabel("Hard: 0.5", app.energyx-50, app.othery+75, size=18, align="left")
+    drawLabel("The max is 1 (out of 10).", app.energyx, app.othery+100, size=18)
     # +/- 0.25 buttons
-    drawCircle(app.energyx-30, app.othery+100, app.buttonRadius, fill="palegreen", 
+    drawCircle(app.energyx-30, app.othery+140, app.buttonRadius, fill="palegreen", 
                border="black")
-    drawLabel("+0.1", app.energyx-30, app.othery+100, size=16)
-    drawCircle(app.energyx+30, app.othery+100, app.buttonRadius, fill="tomato", 
+    drawLabel("+0.1", app.energyx-30, app.othery+140, size=16)
+    drawCircle(app.energyx+30, app.othery+140, app.buttonRadius, fill="tomato", 
                border="black")
-    drawLabel("-0.1", app.energyx+30, app.othery+100, size=16)
+    drawLabel("-0.1", app.energyx+30, app.othery+140, size=16)
     
 
     # go back button
@@ -608,9 +620,7 @@ def drawBackground(app, needsOpacity):
         drawRect(0, 0, app.width, app.height, fill="white", opacity=50)
 
 
-
-
-''' ON STEP FUNCTIONS '''
+''' onStep Functions '''
 
 # move the background
 def moveBackground(app):
@@ -718,12 +728,7 @@ def updateEnergy(app):
             app.flowers.pop(0)
 
 
-
-# classic distance function
-def distance(x0, y0, x1, y1):
-    x = x0 - x1
-    y = y0 - y1
-    return (x**2 + y**2)**0.5
+''' Main '''
 
 def main():
     runApp(width = 800, height = 600)
