@@ -76,7 +76,7 @@ class Wasp(Obstacle):
 
     def draw(self):
         drawImage(self.image, self.x, self.y, 
-                  width = 2*self.r, height=2*self.r, align="center")
+                  width = 1.8*self.r, height=1.8*self.r, align="center")
 
 class Web(Obstacle):
 
@@ -137,4 +137,4 @@ class Net(Obstacle):
         
     def draw(self):
         drawImage(self.image, self.x, self.y, 
-                  width = 1.8*self.r, height=1.9*self.r, align="center")
+                  width = 1.8*self.r, height=1.8*self.r, align="center")
