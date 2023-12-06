@@ -28,6 +28,7 @@ def restartApp(app):
     app.startMenu = True
     app.customDiff = app.gameOver = app.paused = app.won = False
     app.death = 0 # refers to type of death for death screen
+    app.aboutToSuction = False
     app.suction = False
 
     # difficulty selection + coords
@@ -94,15 +95,17 @@ def onStep(app):
         if app.timeSurvived >= app.timeToSurvive:
             app.won = True
         
-        # suction obstacle time
-        startTime = 40
-        if app.energyLoss < 0.25: endTime = startTime+7
-        elif app.energyLoss < 0.55: endTime = startTime+3
-        elif app.energyLoss < 0.75: endTime = startTime+1.5
-        else: endTime = startTime+1
-        if (app.timeSurvived % 60) > (startTime-5) and (app.timeSurvived % 60) < startTime:
+        # downdraft time
+        downdraftStartTime = 40
+        if app.energyLoss < 0.25: endTime = downdraftStartTime+7
+        elif app.energyLoss < 0.55: endTime = downdraftStartTime+3
+        elif app.energyLoss < 0.75: endTime = downdraftStartTime+1.5
+        else: endTime = downdraftStartTime+1
+        if ((app.timeSurvived % 60) > (downdraftStartTime-5) and 
+            (app.timeSurvived % 60) < downdraftStartTime):
             app.aboutToSuction = True
-        elif (app.timeSurvived % 60) > startTime and (app.timeSurvived % 60) < endTime:
+        elif ((app.timeSurvived % 60) > downdraftStartTime and 
+              (app.timeSurvived % 60) < endTime):
             app.aboutToSuction = False
             app.suction = True
         else: 
@@ -114,7 +117,7 @@ def onStep(app):
         else:
             app.player.ddy = 0.2 # normal acceleration downwards
     
-        if not app.paused:
+        if not app.paused and not app.won:
             moveBackground(app)
             
             updateObstaclePosition(app) # moves obstacles and deletes
@@ -134,8 +137,8 @@ def onStep(app):
             app.gameOver = True
         
         # game over if player hits an obstacle or touches bottom/top of screen
-        playerFell = app.player.y >= app.height
-        playerTooHigh = app.player.y < 0
+        playerFell = (app.player.y >= app.height)
+        playerTooHigh = (app.player.y < 0)
         if (app.player.isColliding(app.wasps) or 
             app.player.isColliding(app.webs) or 
             app.player.isColliding(app.nets) or playerFell or playerTooHigh):
@@ -145,7 +148,7 @@ def onStep(app):
 
 # spacebar to jump, r to reset, p to pause
 def onKeyPress(app, key):
-    # basic mechancis
+    # basic mechanics
     if key == "space" and not app.gameOver and not app.paused:
         app.player.jump()
     if key == "p" and not app.gameOver:
@@ -177,7 +180,8 @@ def redrawAll(app):
         if app.aboutToSuction:
             drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
             drawLabel("You're about to get pulled by a downdraft! Fight it!", 
-                      0.5*app.width, 0.4*app.height, size=26, bold=True, fill="white")
+                      0.5*app.width, 0.4*app.height, size=26, bold=True, 
+                      fill="white")
         
         if app.suction:
             drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
@@ -298,6 +302,7 @@ def randomFlower(app, num):
 
 # checks if the obstacles are passable
 def isSurvivable(app, potentialObstacle):
+    # refers to if the potential obstacle is survivable with both webs and nets
     goodWithNets = goodWithWebs = True
 
     if isinstance(potentialObstacle, Wasp): return True
@@ -305,11 +310,12 @@ def isSurvivable(app, potentialObstacle):
     for w in range(len(app.webs)):
         curr = app.webs[w]
         if (potentialObstacle.x - curr.x) > app.width/2: continue
-        y = abs(curr.y - potentialObstacle.y)
-        r = curr.r + potentialObstacle.r
-        if abs(y - r) < 60:
+        y = abs(curr.y - potentialObstacle.y) # difference in y positions
+        r = curr.r + potentialObstacle.r # combined radii
+        if abs(y - r) < 60: # make sure there's room between the obstacles to jump
             goodWithWebs = False
     
+    # same code as the webs, but for nets
     for n in range(len(app.nets)):
         curr = app.nets[n]
         if (potentialObstacle.x - curr.x) > app.width/2: continue
@@ -502,8 +508,6 @@ def drawEnergyBar(app):
     labelX = barTopX + barWidth/2
     labelY = 20 + fullBarHeight
     drawLabel("Energy", labelX, labelY, size=16, fill=color, bold=True)
-    # drawLabel(f"{app.player.energy}/10", labelX, labelY + 15, fill=color, 
-    #           bold=True)
 
 # draws and updates the player's time bar (shows how much time they have left)
 def drawTimerBar(app):
@@ -589,7 +593,7 @@ def drawLoseScreen(app):
 def drawBackground(app, needsOpacity):
     drawImage(app.backgroundImage, app.bgx1, app.bgy, align="center")
     drawImage(app.backgroundImage, app.bgx2, app.bgy, align="center")
-    #drawImage(app.backgroundImage, app.width/2, app.height/2, align="center")
+    
     # opaque rectangle that lets you see text
     if needsOpacity: 
         drawRect(0, 0, app.width, app.height, fill="white", opacity=50)
@@ -615,14 +619,6 @@ def moveBackground(app):
         app.bgx2 = app.bgx1 + app.width
 
 def updateObstaclePosition(app):
-    # obIndex = 0
-    # while obIndex < len(app.obstacles):
-    #     obstacle = app.obstacles[obIndex]
-    #     obstacle.takeStep()
-    #     if obstacle.obstaclePassed():
-    #         app.obstacles.pop(obIndex) # delete obstacle when passed
-    #     else:
-    #         obIndex += 1
     for wasp in app.wasps:
         wasp.takeStep()
     for web in app.webs:
@@ -630,6 +626,8 @@ def updateObstaclePosition(app):
     for net in app.nets:
         net.takeStep()
 
+    # one obstacle type (wasp, web, or net) will never overtake another obstacle 
+    # of the same type, so we only have to pop the first ones 
     if len(app.wasps) > 0:
         if app.wasps[0].x < -app.wasps[0].r:
             app.wasps.pop(0)
@@ -642,14 +640,8 @@ def updateObstaclePosition(app):
 
 # remove flowers once they're passed
 def updateFlowerPosition(app):
-    # flowerIndex = 0
-    # while flowerIndex < len(app.flowers):
-    #     flower = app.flowers[flowerIndex]
-    #     flower.takeStep()
-    #     if flower.flowerPassed():
-    #         app.flowers.pop(flowerIndex) # delete flower when passed
-    #     else:
-    #         flowerIndex += 1
+    # the second flower will never overtake the first flower, so we only need
+    # to check if the player got the first flower in the list
     for flower in app.flowers:
         flower.takeStep()
     if len(app.flowers) > 0:
@@ -662,36 +654,23 @@ def summonObstacles(app):
     enoughTimePassed = (time.time() - app.lastSummonedObstacle) > 1
     totalLength = len(app.wasps) + len(app.webs) + len(app.nets)
     if enoughTimePassed and (totalLength < numSummoning):
-        obstacle = randomObstacle(app, random.randrange(10))
-        # makes sure obstacles aren't conjoined and are survivable
-        # for ob in app.obstacles:
-        #     if type(ob) == Wasp: continue
-        #     while (obstacle.inOtherObstacle(ob) or 
-        #             not isSurvivable(app, obstacle)):
-        #         if obstacle.inOtherObstacle(ob):
-        #             obstacle.x += ob.r # if conjoined, move it right a little
-        #         elif (isinstance(obstacle, Web) and 
-        #                 not isSurvivable(app, obstacle)):
-        #             obstacle.r -= 10
-        #             obstacle.y = obstacle.r
-        #         elif isinstance(obstacle, Net):
-        #                 obstacle.r -= 10
-        #                 obstacle.y = app.height-obstacle.r
-        #         else:
-        #             obstacle = randomObstacle(app, random.randrange(10))
+        obstacle = randomObstacle(app, random.randrange(10)) # potential obstacle
+        
+        # checking compatability with the webs 
         for web in app.webs:
             while (obstacle.inOtherObstacle(web) or 
                    not isSurvivable(app, obstacle)):
                 if obstacle.inOtherObstacle(web):
-                    obstacle.x += web.r
+                    obstacle.x += web.r # move it to the right
                 elif not isSurvivable(app, obstacle):
-                    obstacle.r -= 10
-                    if obstacle.y < 0.5*app.height:
+                    obstacle.r -= 10 # shrink it, allows more space between obstacles
+                    if obstacle.y < 0.5*app.height: # top half of screen
                         obstacle.y = obstacle.r
-                    else: 
+                    else: # bottom half of screen
                         obstacle.y = app.height - obstacle.r
-                    obstacle.y = obstacle.r
+                    #obstacle.y = obstacle.r
         
+        # checking compatability with the nets
         for net in app.nets:
             while (obstacle.inOtherObstacle(net) or 
                    not isSurvivable(app, obstacle)):
