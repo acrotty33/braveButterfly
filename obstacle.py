@@ -47,25 +47,25 @@ class Wasp(Obstacle):
         level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
-                self.dx = -7
+                self.dx = -6
             elif app.timeSurvived < 40: # second level speed
-                self.dx = -8
+                self.dx = -7
             else:
-                self.dx = -9
+                self.dx = -8
         if level == 1:
             if app.timeSurvived: # first level speed
+                self.dx = -7
+            elif app.timeSurvived: # second level speed
+                self.dx = -8
+            else:
+                self.dx = -9
+        if level == 2:
+            if app.timeSurvived: # first level speed
                 self.dx = -8
             elif app.timeSurvived: # second level speed
                 self.dx = -9
             else:
                 self.dx = -10
-        if level == 2:
-            if app.timeSurvived: # first level speed
-                self.dx = -9
-            elif app.timeSurvived: # second level speed
-                self.dx = -10
-            else:
-                self.dx = -11
         if level == 3:
             if app.timeSurvived < (1/3)*app.timeToSurvive:
                 self.dx = app.waspSpeed
@@ -108,25 +108,25 @@ class Net(Obstacle):
         level = app.difficulty
         if level == 0:
             if app.timeSurvived < 20: # first level speed
-                self.dx = -6
+                self.dx = -5
             elif app.timeSurvived < 40: # second level speed
-                self.dx = -7
+                self.dx = -6
             else:
-                self.dx = -8
+                self.dx = -7
         if level == 1:
             if app.timeSurvived: # first level speed
-                self.dx = -7
+                self.dx = -6
             elif app.timeSurvived: # second level speed
-                self.dx = -8
+                self.dx = -7
             else:
-                self.dx = -9
+                self.dx = -8
         if level == 2:
             if app.timeSurvived < 20: # first level speed
-                self.dx = -8
+                self.dx = -7
             elif app.timeSurvived < 40: # second level speed
-                self.dx = -9
+                self.dx = -8
             else:
-                self.dx = -10
+                self.dx = -9
         if level == 3:
             if app.timeSurvived < (1/3)*app.timeToSurvive:
                 self.dx = app.netSpeed

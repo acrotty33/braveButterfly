@@ -50,8 +50,8 @@ def restartApp(app):
     app.waspx, app.netx, app.webx = 0.2*app.width, 0.5*app.width, 0.8*app.width
     app.othery = 0.7*app.height
     app.timex, app.energyx = 0.25*app.width, 0.75*app.width
-    app.waspSpeed = -7
-    app.netSpeed = -6
+    app.waspSpeed = -6
+    app.netSpeed = -5
 
     # obstacles
     app.waspImage = CMUImage(Image.open("images/waspNoBG.png"))
@@ -71,7 +71,7 @@ def restartApp(app):
     app.bgy = app.height/2
 
     app.player = Player()
-    app.playerSpeed = -5
+    app.playerSpeed = -4
     app.energyLoss = 0.2
     app.energyNumerator = 2
 
@@ -204,13 +204,16 @@ def onMousePress(app, mousex, mousey):
         if distance(mousex, mousey, app.easyx, app.diffy) < wordRadius:
             app.difficulty = 0 # easy
             app.timeToSurvive = 60
+            app.playerSpeed = -4
         elif distance(mousex, mousey, app.medx, app.diffy) < wordRadius:
             app.difficulty = 1 # medium
             app.timeToSurvive = 90
+            app.playerSpeed = -5
         elif distance(mousex, mousey, app.hardx, app.diffy) < wordRadius:
             app.difficulty = 2 # hard
             app.timeToSurvive = 120
             app.energyLoss = 0.5
+            app.playerSpeed = -6
         elif distance(mousex, mousey, app.customx, app.diffy) < wordRadius:
             app.difficulty = 3 # custom difficulty
             app.customDiff = True
@@ -284,7 +287,7 @@ def onMousePress(app, mousex, mousey):
 
 
 
-# generates an obstacle
+# generates a pseudorandom obstacle
 def randomObstacle(app, num):
     if num < 2: # 20%
         return Web(app.difficulty)
@@ -293,14 +296,14 @@ def randomObstacle(app, num):
     else: # 50%
         return Wasp(app.difficulty)
 
-# generates a flower
+# generates a pseudorandom flower
 def randomFlower(app, num):
     if num < 6: # 60%
         return SmallFlower()
     else: # 40%
         return BigFlower()
 
-# checks if the obstacles are passable
+# checks if the obstacles have enough distance between for player to jump between
 def isSurvivable(app, potentialObstacle):
     # refers to if the potential obstacle is survivable with both webs and nets
     goodWithNets = goodWithWebs = True
@@ -324,6 +327,11 @@ def isSurvivable(app, potentialObstacle):
         if abs(y - r) < 60:
             goodWithNets = False
     return goodWithWebs and goodWithNets
+
+
+
+
+''' DRAW FUNCTIONS '''
 
 def drawStartMenu(app):
     drawBackground(app, True)
@@ -407,9 +415,9 @@ def drawCustomScreen(app):
     # wasp speed section
     drawLabel(f"Wasp speed: {abs(app.waspSpeed)}", app.waspx, app.speedy, 
               size=24)
-    drawLabel("Easy: 7", app.waspx-50, app.speedy+25, size=18, align="left")
-    drawLabel("Medium: 8", app.waspx-50, app.speedy+50, size=18, align="left")
-    drawLabel("Hard: 9", app.waspx-50, app.speedy+75, size=18, align="left")
+    drawLabel("Easy: 6", app.waspx-50, app.speedy+25, size=18, align="left")
+    drawLabel("Medium: 7", app.waspx-50, app.speedy+50, size=18, align="left")
+    drawLabel("Hard: 8", app.waspx-50, app.speedy+75, size=18, align="left")
     drawCircle(app.waspx-30, app.speedy + 120, 20, fill="palegreen", 
                border="black")
     drawLabel("+1", app.waspx-30, app.speedy+120, size=16)
@@ -420,9 +428,9 @@ def drawCustomScreen(app):
     # net speed section
     drawLabel(f"Net speed: {abs(app.netSpeed)}", app.netx, app.speedy, 
                   size=24)
-    drawLabel("Easy: 6", app.netx-50, app.speedy+25, size=18, align="left")
-    drawLabel("Medium: 7", app.netx-50, app.speedy+50, size=18, align="left")
-    drawLabel("Hard: 8", app.netx-50, app.speedy+75,size=18, align="left")
+    drawLabel("Easy: 5", app.netx-50, app.speedy+25, size=18, align="left")
+    drawLabel("Medium: 6", app.netx-50, app.speedy+50, size=18, align="left")
+    drawLabel("Hard: 7", app.netx-50, app.speedy+75,size=18, align="left")
     drawCircle(app.netx-30, app.speedy + 120, 20, fill="palegreen", 
                border="black")
     drawLabel("+1", app.netx-30, app.speedy+120, size=16)
@@ -431,11 +439,12 @@ def drawCustomScreen(app):
     drawLabel("-1", app.netx+30, app.speedy+120, size=16)
 
     # web speed section
-    drawLabel(f"Web speed: {abs(app.playerSpeed)}", app.webx, 
-                app.speedy, size=24)
-    drawLabel("Easy: 5", app.webx-50, app.speedy+25, size=18, align="left")
-    drawLabel("Medium: 6", app.webx-50, app.speedy+50, size=18, align="left")
-    drawLabel("Hard: 7", app.webx-50, app.speedy+75, size=18, align="left")
+    # since webs can't move by themselves, this is also the background speed
+    drawLabel(f"Web/Background speed: {abs(app.playerSpeed)}", app.webx, 
+                app.speedy, size=24) 
+    drawLabel("Easy: 4", app.webx-50, app.speedy+25, size=18, align="left")
+    drawLabel("Medium: 5", app.webx-50, app.speedy+50, size=18, align="left")
+    drawLabel("Hard: 6", app.webx-50, app.speedy+75, size=18, align="left")
     drawCircle(app.webx-30, app.speedy + 120, 20, fill="palegreen", 
                border="black")
     drawLabel("+1", app.webx-30, app.speedy+120, size=16)
@@ -464,7 +473,7 @@ def drawCustomScreen(app):
               app.othery, size=24)
     drawLabel("Normal: 0.2", app.energyx-50, app.othery+25, size=18, 
               align="left")
-    drawLabel("The max is 10, out of 10 energy points.", app.energyx, app.othery+50, size=18)
+    drawLabel("The max is 1 (out of 10).", app.energyx, app.othery+50, size=18)
     # +/- 0.25 buttons
     drawCircle(app.energyx-30, app.othery+100, app.buttonRadius, fill="palegreen", 
                border="black")
@@ -598,16 +607,10 @@ def drawBackground(app, needsOpacity):
     if needsOpacity: 
         drawRect(0, 0, app.width, app.height, fill="white", opacity=50)
 
-# classic distance function
-def distance(x0, y0, x1, y1):
-    x = x0 - x1
-    y = y0 - y1
-    return (x**2 + y**2)**0.5
 
 
 
-
-# ON STEP FUNCTIONS BELOW
+''' ON STEP FUNCTIONS '''
 
 # move the background
 def moveBackground(app):
@@ -713,6 +716,14 @@ def updateEnergy(app):
         if app.player.gotFlower(app.flowers[0]):
             app.player.addEnergy(app.flowers[0])
             app.flowers.pop(0)
+
+
+
+# classic distance function
+def distance(x0, y0, x1, y1):
+    x = x0 - x1
+    y = y0 - y1
+    return (x**2 + y**2)**0.5
 
 def main():
     runApp(width = 800, height = 600)
