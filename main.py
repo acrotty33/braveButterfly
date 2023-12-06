@@ -2,7 +2,6 @@ from cmu_graphics import *
 from player import Player
 from obstacle import Obstacle, Wasp, Web, Net
 from flower import Flower, BigFlower, SmallFlower
-from queue import SimpleQueue
 import random, time
 from PIL import Image
 
@@ -72,7 +71,8 @@ def restartApp(app):
 
     app.player = Player()
     app.playerSpeed = -5
-    app.energyLoss = 0.25
+    app.energyLoss = 0.2
+    app.energyNumerator = 2
 
 # check win/lose, summon/remove obstacles and flowers
 def onStep(app):
@@ -95,9 +95,14 @@ def onStep(app):
             app.won = True
         
         # suction obstacle time
-        if (app.timeSurvived % 60) > 35 and (app.timeSurvived % 60) < 40:
+        startTime = 40
+        if app.energyLoss < 0.25: endTime = startTime+7
+        elif app.energyLoss < 0.55: endTime = startTime+3
+        elif app.energyLoss < 0.75: endTime = startTime+1.5
+        else: endTime = startTime+1
+        if (app.timeSurvived % 60) > (startTime-5) and (app.timeSurvived % 60) < startTime:
             app.aboutToSuction = True
-        elif (app.timeSurvived % 60) > 40 and (app.timeSurvived % 60) < 47:
+        elif (app.timeSurvived % 60) > startTime and (app.timeSurvived % 60) < endTime:
             app.aboutToSuction = False
             app.suction = True
         else: 
@@ -157,7 +162,6 @@ def redrawAll(app):
     elif app.won:
         drawWinScreen(app)
     else:
-        #if app.won: drawWinScreen(app)
         drawBackground(app, False)
         for wasp in app.wasps:
             wasp.draw()
@@ -172,7 +176,7 @@ def redrawAll(app):
 
         if app.aboutToSuction:
             drawRect(0, 0, app.width, app.height, fill="red", opacity=20)
-            drawLabel("You're about to get sucked down to the bottom! Fight it!", 
+            drawLabel("You're about to get pulled by a downdraft! Fight it!", 
                       0.5*app.width, 0.4*app.height, size=26, bold=True, fill="white")
         
         if app.suction:
@@ -190,30 +194,35 @@ def redrawAll(app):
         app.player.draw(app.player.x, app.player.y)
 
 def onMousePress(app, mousex, mousey):
-    wordRadius = 20
+    wordRadius = 30
     if app.startMenu:
         # difficulty selection
         if distance(mousex, mousey, app.easyx, app.diffy) < wordRadius:
             app.difficulty = 0 # easy
+            app.timeToSurvive = 60
         elif distance(mousex, mousey, app.medx, app.diffy) < wordRadius:
             app.difficulty = 1 # medium
+            app.timeToSurvive = 90
         elif distance(mousex, mousey, app.hardx, app.diffy) < wordRadius:
             app.difficulty = 2 # hard
+            app.timeToSurvive = 120
+            app.energyLoss = 0.5
         elif distance(mousex, mousey, app.customx, app.diffy) < wordRadius:
             app.difficulty = 3 # custom difficulty
             app.customDiff = True
             app.startMenu = False
         
         # player color selection
-        if distance(mousex, mousey, app.redx, app.flyy) < wordRadius:
+        colorRadius = 50
+        if distance(mousex, mousey, app.redx, app.flyy) < colorRadius:
             app.playerColor = "red"
-        elif distance(mousex, mousey, app.pinkx, app.flyy) < wordRadius:
+        elif distance(mousex, mousey, app.pinkx, app.flyy) < colorRadius:
             app.playerColor = "pink"
-        elif distance(mousex, mousey, app.orangex, app.flyy) < wordRadius:
+        elif distance(mousex, mousey, app.orangex, app.flyy) < colorRadius:
             app.playerColor = "orange"
-        elif distance(mousex, mousey, app.lightTealx, app.flyy) < wordRadius:
+        elif distance(mousex, mousey, app.lightTealx, app.flyy) < colorRadius:
             app.playerColor = "lightTeal"
-        elif distance(mousex, mousey, app.bluex, app.flyy) < wordRadius:
+        elif distance(mousex, mousey, app.bluex, app.flyy) < colorRadius:
             app.playerColor = "blue"
 
         # start button
@@ -260,11 +269,13 @@ def onMousePress(app, mousex, mousey):
         
         # energy increment button
         elif (distance(mousex, mousey, app.energyx-30, app.othery+100) < 20 and
-              app.energyLoss < 10):
-            app.energyLoss += 0.25
+              app.energyLoss < 1):
+            app.energyNumerator += 1
+            app.energyLoss = app.energyNumerator / 10
         elif (distance(mousex, mousey, app.energyx+30, app.othery+100) < 20 and 
-              app.energyLoss > 0.25):
-            app.energyLoss -= 0.25
+              app.energyLoss > 0):
+            app.energyNumerator -= 1
+            app.energyLoss = app.energyNumerator / 10
 
 
 
@@ -279,10 +290,10 @@ def randomObstacle(app, num):
         return Wasp(app.difficulty)
 
 # generates a flower
-def randomFlower(num):
-    if num < 7: # 70%
+def randomFlower(app, num):
+    if num < 6: # 60%
         return SmallFlower()
-    else: # 30%
+    else: # 40%
         return BigFlower()
 
 # checks if the obstacles are passable
@@ -365,7 +376,7 @@ def drawStartMenu(app):
         drawImage(bluePic, app.bluex, app.flyy, align="center")
     else: drawImage(bluePic, app.bluex, app.flyy, align="center", opacity=60)
 
-    # how to play
+    # how to play / tips
     drawLabel("Tips", 0.5*app.width, 0.6*app.height, size=24, bold=True)
     drawLabel("Press SPACE to jump, 'r' to restart, and 'p' to pause.", 
               0.2*app.width, 0.65*app.height, size=20, align="left")
@@ -373,7 +384,7 @@ def drawStartMenu(app):
               0.2*app.width, 0.7*app.height, size=20, align="left")
     drawLabel("Make sure to catch flowers to replenish your energy!",
               0.2*app.width, 0.75*app.height, size=20, align="left")
-    drawLabel("You must survive for one minute.",
+    drawLabel("Don't go too high or low!",
               0.2*app.width, 0.8*app.height, size=20, align="left")
     # start button
     drawLabel("Start", 0.5*app.width, 0.9*app.height, size=24, bold=True)
@@ -445,16 +456,16 @@ def drawCustomScreen(app):
     # energy section
     drawLabel(f"Energy loss per jump: {app.energyLoss}", app.energyx, 
               app.othery, size=24)
-    drawLabel("Normal: 0.25", app.energyx-50, app.othery+25, size=18, 
+    drawLabel("Normal: 0.2", app.energyx-50, app.othery+25, size=18, 
               align="left")
     drawLabel("The max is 10, out of 10 energy points.", app.energyx, app.othery+50, size=18)
     # +/- 0.25 buttons
     drawCircle(app.energyx-30, app.othery+100, app.buttonRadius, fill="palegreen", 
                border="black")
-    drawLabel("+0.25", app.energyx-30, app.othery+100, size=16)
+    drawLabel("+0.1", app.energyx-30, app.othery+100, size=16)
     drawCircle(app.energyx+30, app.othery+100, app.buttonRadius, fill="tomato", 
                border="black")
-    drawLabel("-0.25", app.energyx+30, app.othery+100, size=16)
+    drawLabel("-0.1", app.energyx+30, app.othery+100, size=16)
     
 
     # go back button
@@ -491,8 +502,8 @@ def drawEnergyBar(app):
     labelX = barTopX + barWidth/2
     labelY = 20 + fullBarHeight
     drawLabel("Energy", labelX, labelY, size=16, fill=color, bold=True)
-    drawLabel(f"{app.player.energy}/10", labelX, labelY + 15, fill=color, 
-              bold=True)
+    # drawLabel(f"{app.player.energy}/10", labelX, labelY + 15, fill=color, 
+    #           bold=True)
 
 # draws and updates the player's time bar (shows how much time they have left)
 def drawTimerBar(app):
@@ -560,7 +571,7 @@ def drawLoseScreen(app):
 
     # stats
     if app.difficulty == 0: difficulty = "Easy"
-    elif app.difficulty == 1: difficulty = "Intermediate"
+    elif app.difficulty == 1: difficulty = "Medium"
     elif app.difficulty == 2: difficulty = "Hard"
     else: difficulty = "Custom"
     drawLabel(f"Difficulty: {difficulty}", app.width/2, deathY+60, size=24,
@@ -705,7 +716,8 @@ def summonFlowers(app):
     numFlowersSummoning = random.randrange(0, app.numFlowers)
     flowerTime = (time.time() - app.lastSummonedFlower) > 2
     if flowerTime and (len(app.flowers) < numFlowersSummoning):
-        flower = randomFlower(random.randrange(10))
+        flower = randomFlower(app, random.randrange(10))
+        if app.energyLoss > 0.25: flower.dx -= 1
         app.flowers.append(flower)
         app.lastSummonedFlower = time.time()
 

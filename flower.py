@@ -18,7 +18,7 @@ class Flower:
     # draws flower
     def draw(self):
         drawImage(self.image, self.x, self.y, 
-                  width=self.r*2.4, height = self.r*2, align="center")
+                  width=self.r*1.9, height = 1.7*self.r, align="center")
     
     # removes obstacle if player avoided it
     def flowerPassed(self):
@@ -33,12 +33,12 @@ class BigFlower(Flower):
 
     # constructor
     def __init__(self):
-        self.r = random.randrange(18, 23)
+        self.r = random.randrange(20, 25)
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
         self.dy = random.uniform(2, 3)
-        self.energy = 1
+        self.energy = 4*app.energyLoss
         self.image = app.redFlower
 
 class SmallFlower(Flower):
@@ -48,10 +48,10 @@ class SmallFlower(Flower):
 
     # constructor
     def __init__(self):
-        self.r = random.randrange(15, 20)
+        self.r = random.randrange(18, 23)
         self.x = app.width + self.r
         self.y = -self.r
         self.dx = -3
         self.dy = random.uniform(1, 2)
-        self.energy = 0.5
+        self.energy = 2*app.energyLoss
         self.image = app.pinkFlower

@@ -73,7 +73,7 @@ class Wasp(Obstacle):
                 self.dx  = app.waspSpeed - 1
             else:
                 self.dx = app.waspSpeed - 2
-    
+
     def draw(self):
         drawImage(self.image, self.x, self.y, 
                   width = 2*self.r, height=2*self.r, align="center")

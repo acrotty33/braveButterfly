@@ -69,7 +69,6 @@ class Player:
     # manages player jumping
     def jump(self):
         self.dy = -4
-        #self.ddy = 0.2
         self.energy -= app.energyLoss       
     
     # checks if player hit an obstacle
